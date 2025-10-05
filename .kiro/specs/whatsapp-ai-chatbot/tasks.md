@@ -199,18 +199,21 @@
     - Added HSTS, secure cookies, XSS protection, and rate limiting settings
     - _Requirements: 5.3_
 
-- [ ] 12. Create Docker deployment setup
-  - [ ] 12.1 Create Dockerfile for Django application
-    - Create Dockerfile with multi-stage build
-    - Install Python dependencies
-    - Configure gunicorn for production
-    - Set up proper user permissions
+- [x] 12. Create Docker deployment setup
+  - [x] 12.1 Create Dockerfile for Django application
+    - Create Dockerfile with multi-stage build (builder + runtime stages)
+    - Install Python dependencies with pip wheel optimization
+    - Configure gunicorn for production with auto-scaling workers
+    - Set up proper user permissions (non-root django user)
+    - Added security: runs as non-root, minimal image size
     - _Requirements: 7.1_
-  
-  - [ ] 12.2 Create startup scripts
+
+  - [x] 12.2 Create startup scripts
     - Create docker-entrypoint.sh to run migrations
-    - Add health check endpoint in Django
-    - Configure graceful shutdown
+    - Added database readiness check with retries
+    - Add health check endpoint in Django (checks DB + Redis)
+    - Configure graceful shutdown with SIGTERM handling
+    - Automated superuser creation and configuration validation
     - _Requirements: 7.1_
 
 - [ ]* 13. Write comprehensive tests
