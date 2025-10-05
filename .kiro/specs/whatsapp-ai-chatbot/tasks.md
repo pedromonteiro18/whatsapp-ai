@@ -181,7 +181,6 @@
     - Implement per-user rate limiting using Redis
     - Configure rate limits from Config class
     - Return appropriate error messages when rate limited
-    - Note: Integration with webhook view deferred to later implementation phase
     - _Requirements: 5.3, 3.3_
 
   - [x] 11.2 Add input sanitization
@@ -293,3 +292,78 @@
     - Test configuration updates via admin
     - Test environment variable loading
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.1_
+
+- [ ] 16. Implement system prompt and AI personality configuration
+  - [ ] 16.1 Add system prompt configuration to Config class
+    - Add AI_SYSTEM_PROMPT environment variable to Config
+    - Add AI_SYSTEM_PROMPT_FILE environment variable for loading from file
+    - Implement validation to ensure at least one is configured
+    - Add default system prompt if none provided
+    - _Requirements: 2.1, 2.2_
+  
+  - [ ] 16.2 Add system_prompt field to AIConfiguration model
+    - Add TextField for storing custom system prompts per configuration
+    - Create migration to add the new field
+    - Update AIConfiguration admin to allow editing system prompts
+    - _Requirements: 2.1, 5.1_
+  
+  - [ ] 16.3 Update MessageProcessor to inject system prompt
+    - Modify _format_history_for_ai() to prepend system message
+    - Load system prompt from AIConfiguration or Config
+    - Ensure system message is always first in conversation history
+    - Add system prompt to conversation context
+    - _Requirements: 3.1, 4.2_
+  
+  - [ ] 16.4 Update AI adapters to handle system messages
+    - Ensure OpenRouterAdapter properly formats system role messages
+    - Test system message injection with different AI providers
+    - Verify system prompt is not stored in conversation history
+    - _Requirements: 2.2, 3.2_
+  
+  - [ ] 16.5 Create management command to manage system prompts
+    - Add subcommand to manage_ai_config for viewing/updating system prompts
+    - Support loading system prompt from file
+    - Add validation for system prompt length and format
+    - Provide example system prompts for common use cases
+    - _Requirements: 2.1, 2.4_
+  
+  - [ ] 16.6 Update documentation for system prompt configuration
+    - Document AI_SYSTEM_PROMPT environment variable in README
+    - Add examples of effective system prompts
+    - Document how to configure different personalities per AI configuration
+    - Add troubleshooting guide for system prompt issues
+    - _Requirements: 7.2_
+
+- [ ] 17. Optional enhancements and production readiness
+  - [ ] 17.1 Integrate rate limiting with webhook view
+    - Add RateLimiter check in WhatsAppWebhookView before processing
+    - Return appropriate error response when rate limit exceeded
+    - Send rate limit notification to user via WhatsApp
+    - _Requirements: 5.3_
+  
+  - [ ] 17.2 Add input sanitization to message processing
+    - Integrate Sanitizer.sanitize_message() in MessageProcessor
+    - Sanitize user input before sending to AI
+    - Sanitize AI responses before sending to user
+    - _Requirements: 5.3_
+  
+  - [ ] 17.3 Configure Django admin for models
+    - Register all models in chatbot_core/admin.py
+    - Add custom admin views for Conversation and Message models
+    - Add filters and search capabilities for WebhookLog
+    - Create admin actions for common operations
+    - _Requirements: 6.4_
+  
+  - [ ] 17.4 Add monitoring and metrics
+    - Implement Prometheus metrics for message processing
+    - Add custom metrics for AI API latency and errors
+    - Track conversation statistics (active users, message volume)
+    - Set up alerting for critical metrics
+    - _Requirements: 6.1, 6.2_
+  
+  - [ ] 17.5 Implement webhook logging
+    - Integrate WebhookLog model with webhook view
+    - Log all incoming webhook requests with timing
+    - Log processing results and errors
+    - Add admin interface for viewing webhook logs
+    - _Requirements: 6.1, 6.2_
