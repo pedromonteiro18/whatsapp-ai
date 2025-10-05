@@ -28,7 +28,9 @@ python-dateutil==2.9.0.post0
 # Production server
 gunicorn==23.0.0
 
-# Type checking
+# Development tools
+black==25.9.0
+flake8==7.1.1
 mypy==1.18.2
 
 # Type stubs
