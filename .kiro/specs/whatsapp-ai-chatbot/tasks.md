@@ -160,17 +160,19 @@
     - Rate limits same error type to once per hour to prevent alert fatigue
     - _Requirements: 6.2_
 
-- [ ] 10. Create management commands and utilities
-  - [ ] 10.1 Create command to test WhatsApp integration
+- [x] 10. Create management commands and utilities
+  - [x] 10.1 Create command to test WhatsApp integration
     - Create chatbot_core/management/commands/test_whatsapp.py
     - Send test message to configured WhatsApp number
-    - Verify webhook connectivity
+    - Check Twilio configuration
+    - Supports --check-config flag for config-only validation
     - _Requirements: 1.2_
-  
-  - [ ] 10.2 Create command to manage AI configuration
+
+  - [x] 10.2 Create command to manage AI configuration
     - Create chatbot_core/management/commands/manage_ai_config.py
-    - Add/update AI provider settings in database
-    - Test AI API connectivity
+    - CRUD operations: list, create, update configurations
+    - Test AI API connectivity with validation
+    - Supports both environment and database configurations
     - _Requirements: 2.1, 2.4_
 
 - [ ] 11. Implement security features
