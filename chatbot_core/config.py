@@ -23,6 +23,9 @@ class Config:
     TWILIO_ACCOUNT_SID: str = config("TWILIO_ACCOUNT_SID", default="")
     TWILIO_AUTH_TOKEN: str = config("TWILIO_AUTH_TOKEN", default="")
     TWILIO_WHATSAPP_NUMBER: str = config("TWILIO_WHATSAPP_NUMBER", default="")
+    SKIP_WEBHOOK_SIGNATURE_VERIFICATION: bool = config(
+        "SKIP_WEBHOOK_SIGNATURE_VERIFICATION", default=False, cast=bool
+    )
 
     # AI Provider Settings
     # OpenRouter provides unified access to multiple AI providers

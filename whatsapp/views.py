@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from rest_framework import status
+from rest_framework.parsers import FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -31,6 +32,8 @@ class WhatsAppWebhookView(APIView):
     # Security is handled via signature verification
     authentication_classes = []
     permission_classes = []
+    # Accept form-encoded data from Twilio webhooks
+    parser_classes = [FormParser]
 
     def get(self, request):
         """
@@ -71,16 +74,21 @@ class WhatsAppWebhookView(APIView):
             # Get POST data as dictionary
             post_data = dict(request.POST.items())
 
-            # Verify webhook signature
-            if not verify_webhook_signature(url, post_data, signature):
-                logger.warning(
-                    "Webhook signature verification failed for request from %s",
-                    request.META.get("REMOTE_ADDR"),
-                )
-                return Response(
-                    {"error": "Invalid signature"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+            # Verify webhook signature (skip in development if configured)
+            from chatbot_core.config import Config
+
+            if not Config.SKIP_WEBHOOK_SIGNATURE_VERIFICATION:
+                if not verify_webhook_signature(url, post_data, signature):
+                    logger.warning(
+                        "Webhook signature verification failed for request from %s",
+                        request.META.get("REMOTE_ADDR"),
+                    )
+                    return Response(
+                        {"error": "Invalid signature"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            else:
+                logger.info("Skipping webhook signature verification (development mode)")
 
             # Extract message data from Twilio payload
             sender = request.POST.get("From", "")
@@ -110,8 +118,8 @@ class WhatsAppWebhookView(APIView):
             # Import here to avoid circular imports
             from chatbot_core.tasks import process_whatsapp_message
 
-            # Queue the task asynchronously
-            process_whatsapp_message.delay(sender, message_body, message_sid)
+            # Queue the task asynchronously (only sender and message_body)
+            process_whatsapp_message.delay(sender, message_body)
 
             logger.info("Message queued for processing: %s", message_sid)
 
