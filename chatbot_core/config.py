@@ -5,9 +5,11 @@ This module provides centralized configuration management with validation
 and type-safe access to all application settings.
 """
 
-from typing import Optional
+import logging
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -116,7 +118,10 @@ class Config:
             error_message = "Configuration validation failed:\n" + "\n".join(
                 f"  - {error}" for error in errors
             )
+            logger.error("Configuration validation failed: %s", errors)
             raise ImproperlyConfigured(error_message)
+        
+        logger.info("Configuration validation passed successfully")
 
     @classmethod
     def get_ai_api_key(cls) -> str:
