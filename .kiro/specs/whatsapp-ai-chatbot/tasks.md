@@ -62,249 +62,226 @@
     - Support loading from environment variables or database
     - _Requirements: 2.2, 2.4_
 
-- [ ] 5. Implement conversation management with Redis
-  - [ ] 5.1 Create ConversationManager class
+- [x] 5. Implement conversation management with Redis
+  - [x] 5.1 Create ConversationManager class
     - Implement get_history() to retrieve recent messages from Redis
     - Implement add_message() to store messages with automatic expiration
     - Implement clear_history() for conversation reset
     - Use Redis sorted sets for efficient time-based retrieval
     - _Requirements: 4.1, 4.2, 4.3_
   
-  - [ ] 5.2 Implement conversation context window management
+  - [x] 5.2 Implement conversation context window management
     - Limit conversation history to MAX_CONTEXT_MESSAGES from config
     - Implement sliding window to keep most recent messages
     - _Requirements: 4.2_
   
-  - [ ] 5.3 Add conversation expiration handling
+  - [x] 5.3 Add conversation expiration handling
     - Set TTL on Redis keys based on CONVERSATION_TTL config
     - Implement automatic cleanup of expired conversations
     - _Requirements: 4.3_
 
-- [ ] 6. Build WhatsApp integration layer
-  - [ ] 6.1 Create WhatsAppClient for sending messages
+- [x] 6. Build WhatsApp integration layer
+  - [x] 6.1 Create WhatsAppClient for sending messages
+    - Create whatsapp/client.py with WhatsAppClient class
     - Implement send_message() using Twilio Python SDK
-    - Configure Twilio credentials from environment variables
+    - Configure Twilio credentials from Config class
     - Add retry logic for failed message sends
     - Implement error handling for Twilio API errors
     - _Requirements: 1.2, 1.3_
   
-  - [ ] 6.2 Implement webhook signature verification
-    - Create utility function to validate Twilio webhook signatures
+  - [x] 6.2 Implement webhook signature verification
+    - Create whatsapp/utils.py with verify_webhook_signature() function
     - Use Twilio's request validator with auth token
     - _Requirements: 5.3, 1.1_
   
-  - [ ] 6.3 Create WhatsApp webhook view
-    - Implement POST endpoint to receive incoming messages
-    - Implement GET endpoint for webhook verification
+  - [x] 6.3 Create WhatsApp webhook view
+    - Implement WhatsAppWebhookView in whatsapp/views.py
+    - Add POST endpoint to receive incoming messages
+    - Add GET endpoint for webhook verification
     - Parse Twilio webhook payload to extract sender and message
     - Validate webhook signature before processing
     - Queue message processing as Celery task
     - Return 200 OK immediately to prevent timeout
     - _Requirements: 1.1, 1.3, 6.3_
   
-  - [ ] 6.4 Add webhook logging
-    - Log all incoming webhook requests to WebhookLog model
-    - Include headers, body, processing time, and any errors
-    - _Requirements: 6.1, 6.2_
+  - [x] 6.4 Add webhook URL configuration
+    - Add webhook endpoint to whatsapp_ai_chatbot/urls.py
+    - Configure URL routing for WhatsApp webhook
+    - _Requirements: 1.1_
 
-- [ ] 7. Implement message processing logic
-  - [ ] 7.1 Create MessageProcessor class
+- [x] 7. Implement message processing logic
+  - [x] 7.1 Create MessageProcessor class
+    - Create chatbot_core/message_processor.py with MessageProcessor class
     - Implement process_message() method as main entry point
-    - Retrieve or create conversation for user
+    - Retrieve or create conversation for user in database
     - Get conversation history from ConversationManager
     - _Requirements: 3.1, 4.1, 4.2_
-  
-  - [ ] 7.2 Implement AI interaction flow
+
+  - [x] 7.2 Implement AI interaction flow
     - Format conversation history for AI adapter
     - Call AI adapter's send_message() with context
     - Handle AI API responses and errors
-    - Save user message and AI response to database and Redis
+    - Save user message and AI response to database (Message model)
+    - Save messages to Redis via ConversationManager
     - _Requirements: 3.2, 3.5, 4.2_
-  
-  - [ ] 7.3 Add error handling and user notifications
-    - Catch AI API errors and send user-friendly messages
+
+  - [x] 7.3 Add error handling and user notifications
+    - Catch AI API errors and send user-friendly messages via WhatsAppClient
     - Handle timeout scenarios with appropriate user feedback
     - Implement fallback responses for system errors
     - _Requirements: 3.3, 3.5, 6.3_
-  
-  - [ ] 7.4 Create Celery task for async processing
-    - Wrap message processing in Celery task
+
+- [x] 8. Create Celery tasks for async processing
+  - [x] 8.1 Create message processing task
+    - Create chatbot_core/tasks.py with process_whatsapp_message task
+    - Wrap MessageProcessor.process_message() in Celery task
     - Configure task retry policy for transient failures
     - Add task timeout to prevent hanging tasks
+    - Log task execution and errors
     - _Requirements: 3.1, 3.3_
 
-- [ ] 8. Implement error handling and logging system
-  - [ ] 8.1 Create ErrorHandler utility class
+  - [x] 8.2 Create conversation cleanup task
+    - Add cleanup_expired_conversations periodic task
+    - Query and delete inactive conversations older than TTL
+    - Schedule task with Celery beat (every 6 hours)
+    - _Requirements: 4.3_
+
+- [ ] 9. Implement error handling utilities
+  - [ ] 9.1 Create ErrorHandler utility class
+    - Create chatbot_core/error_handler.py with ErrorHandler class
     - Implement methods for different error categories (webhook, AI, system)
     - Generate user-friendly error messages
     - Log errors with appropriate severity levels
     - _Requirements: 6.1, 6.3_
   
-  - [x] 8.2 Configure Django logging
-    - Set up logging configuration in settings.py
-    - Configure separate loggers for different components (django, chatbot_core, whatsapp, ai_integration, celery)
-    - Add file and console handlers with rotation
-    - _Requirements: 6.1, 6.4_
-  
-  - [ ] 8.3 Implement admin notification for critical errors
-    - Create utility to send alerts for critical failures
+  - [ ] 9.2 Implement admin notification for critical errors
+    - Add send_admin_alert() method to ErrorHandler
     - Configure notification channels (email, Slack, etc.)
     - _Requirements: 6.2_
 
-- [x] 9. Set up Celery for asynchronous task processing
-  - [x] 9.1 Configure Celery with Redis broker
-    - Create celery.py configuration file
-    - Configure Redis as message broker and result backend
-    - Set up task routing and queue configuration
-    - _Requirements: 3.1_
-  
-  - [ ] 9.2 Create Celery tasks
-    - Create task for processing WhatsApp messages
-    - Add task for cleaning up expired conversations
-    - Configure task retry policies and timeouts
-    - _Requirements: 3.1, 3.3, 4.3_
-  
-  - [x] 9.3 Add Celery monitoring
-    - Configure Celery beat for periodic tasks
-    - Add task status tracking
-    - _Requirements: 6.1_
-
 - [ ] 10. Create management commands and utilities
-  - [x] 10.1 Create command to validate configuration
-    - Check all required environment variables are set
-    - Test Twilio credentials
-    - Test AI API credentials
-    - Verify database and Redis connectivity
-    - _Requirements: 7.2, 7.4_
-  
-  - [ ] 10.2 Create command to test WhatsApp integration
+  - [ ] 10.1 Create command to test WhatsApp integration
+    - Create chatbot_core/management/commands/test_whatsapp.py
     - Send test message to configured WhatsApp number
     - Verify webhook connectivity
     - _Requirements: 1.2_
   
-  - [ ] 10.3 Create command to manage AI configuration
-    - Add/update AI provider settings
+  - [ ] 10.2 Create command to manage AI configuration
+    - Create chatbot_core/management/commands/manage_ai_config.py
+    - Add/update AI provider settings in database
     - Test AI API connectivity
     - _Requirements: 2.1, 2.4_
 
-- [x] 11. Build admin interface
-  - [x] 11.1 Register models with Django admin
-    - Create admin classes for Conversation, Message, AIConfiguration, WebhookLog
-    - Add list displays, filters, and search fields
-    - Make api_key field read-only in admin for security
-    - _Requirements: 2.1, 4.1_
-  
-  - [ ] 11.2 Create custom admin views
-    - Add dashboard view showing active conversations
-    - Create view to monitor webhook logs
-    - Add AI configuration management interface
-    - _Requirements: 6.4_
-
-- [ ] 12. Implement security features
-  - [ ] 12.1 Add rate limiting
+- [ ] 11. Implement security features
+  - [ ] 11.1 Add rate limiting
+    - Create chatbot_core/rate_limiter.py with RateLimiter class
     - Implement per-user rate limiting using Redis
-    - Configure rate limits in settings
+    - Configure rate limits from Config class
     - Return appropriate error messages when rate limited
+    - Integrate with webhook view
     - _Requirements: 5.3, 3.3_
   
-  - [ ] 12.2 Add input sanitization
+  - [ ] 11.2 Add input sanitization
+    - Create chatbot_core/sanitizer.py with input sanitization functions
     - Sanitize user messages before processing
     - Validate phone number formats
     - Escape special characters in responses
     - _Requirements: 5.3_
   
-  - [ ] 12.3 Configure HTTPS and security headers
-    - Set up Django security middleware
+  - [ ] 11.3 Configure HTTPS and security headers
+    - Update settings.py with security middleware configuration
     - Configure SECURE_SSL_REDIRECT and other security settings
-    - Add CORS configuration if needed
+    - Update CORS configuration for production
     - _Requirements: 5.3_
 
-- [ ] 13. Create Docker deployment setup
-  - [ ] 13.1 Create Dockerfile for Django application
-    - Use multi-stage build for optimized image
+- [ ] 12. Create Docker deployment setup
+  - [ ] 12.1 Create Dockerfile for Django application
+    - Create Dockerfile with multi-stage build
     - Install Python dependencies
     - Configure gunicorn for production
+    - Set up proper user permissions
     - _Requirements: 7.1_
   
-  - [x] 13.2 Create docker-compose.yml
-    - Define services for web, celery worker, celery beat, PostgreSQL, Redis
-    - Configure environment variables and volumes
-    - Set up networking between containers
-    - Add health checks for database and Redis
-    - _Requirements: 7.1, 7.3_
-  
-  - [ ] 13.3 Create startup scripts
-    - Create entrypoint script to run migrations
-    - Add health check endpoints
+  - [ ] 12.2 Create startup scripts
+    - Create docker-entrypoint.sh to run migrations
+    - Add health check endpoint in Django
     - Configure graceful shutdown
     - _Requirements: 7.1_
 
-- [ ]* 14. Write comprehensive tests
-  - [ ]* 14.1 Write unit tests for AI adapters
+- [ ]* 13. Write comprehensive tests
+  - [ ]* 13.1 Write unit tests for AI adapters
+    - Create ai_integration/tests/test_adapters.py
     - Mock AI API responses
     - Test error handling and retries
     - Test message formatting
     - _Requirements: 3.2, 3.5_
   
-  - [ ]* 14.2 Write unit tests for ConversationManager
-    - Mock Redis operations
+  - [ ]* 13.2 Write unit tests for ConversationManager
+    - Create chatbot_core/tests/test_conversation_manager.py
+    - Mock Redis operations using fakeredis
     - Test conversation history retrieval and storage
     - Test expiration handling
     - _Requirements: 4.1, 4.2, 4.3_
   
-  - [ ]* 14.3 Write unit tests for MessageProcessor
+  - [ ]* 13.3 Write unit tests for MessageProcessor
+    - Create chatbot_core/tests/test_message_processor.py
     - Mock dependencies (AI adapter, ConversationManager, WhatsAppClient)
     - Test message processing flow
     - Test error scenarios
     - _Requirements: 3.1, 3.2, 3.5_
   
-  - [ ]* 14.4 Write integration tests for webhook endpoint
+  - [ ]* 13.4 Write integration tests for webhook endpoint
+    - Create whatsapp/tests/test_webhook.py
     - Test with sample Twilio payloads
     - Test signature verification
     - Test end-to-end message flow
     - _Requirements: 1.1, 1.2, 5.3_
   
-  - [ ]* 14.5 Write integration tests for database operations
+  - [ ]* 13.5 Write integration tests for database operations
+    - Create chatbot_core/tests/test_models.py
     - Test model creation and retrieval
     - Test conversation and message relationships
-    - Test encryption of sensitive fields
     - _Requirements: 4.1, 4.2, 5.1_
 
-- [ ] 15. Create documentation and setup guide
-  - [ ] 15.1 Write README.md
+- [ ] 14. Create documentation and setup guide
+  - [ ] 14.1 Update README.md
     - Add project overview and features
     - Include prerequisites and dependencies
     - Document environment variables
+    - Add quick start guide
     - _Requirements: 7.1, 7.2_
   
-  - [ ] 15.2 Create setup instructions
+  - [ ] 14.2 Create setup instructions
     - Document Twilio account setup and webhook configuration
-    - Document AI API key setup
+    - Document OpenRouter/AI API key setup
     - Provide step-by-step local development setup
+    - Add Docker deployment instructions
     - _Requirements: 2.1, 7.1_
   
-  - [ ] 15.3 Create API documentation
-    - Document webhook endpoints
+  - [ ] 14.3 Create API documentation
+    - Document webhook endpoints and payload format
     - Document admin interface usage
     - Add troubleshooting guide
     - _Requirements: 6.4_
 
-- [ ] 16. Final integration and testing
-  - [ ] 16.1 Test complete user flow
+- [ ] 15. Final integration and testing
+  - [ ] 15.1 Test complete user flow
     - Send test message from WhatsApp
     - Verify AI response is received
-    - Test multi-turn conversation
+    - Test multi-turn conversation with context
+    - Verify conversation history persistence
     - _Requirements: 1.1, 1.2, 3.1, 3.2, 4.1, 4.2_
   
-  - [ ] 16.2 Test error scenarios
+  - [ ] 15.2 Test error scenarios
     - Test with invalid AI API key
     - Test with Twilio service interruption
     - Test database connection failures
+    - Test Redis connection failures
     - Verify user receives appropriate error messages
     - _Requirements: 1.3, 1.4, 3.3, 3.5, 6.3_
   
-  - [ ] 16.3 Verify configuration management
-    - Test with different AI providers
-    - Test configuration updates
-    - Verify encrypted storage of credentials
+  - [ ] 15.3 Verify configuration management
+    - Test with different AI providers (OpenAI, Anthropic via OpenRouter)
+    - Test configuration updates via admin
+    - Test environment variable loading
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.1_
