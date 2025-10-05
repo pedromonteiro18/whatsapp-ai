@@ -57,6 +57,12 @@ class Config:
     RATE_LIMIT_MESSAGES_PER_MINUTE: int = config(
         "RATE_LIMIT_MESSAGES_PER_MINUTE", default=10, cast=int
     )
+    RATE_LIMIT_MAX_REQUESTS: int = config(
+        "RATE_LIMIT_MAX_REQUESTS", default=10, cast=int
+    )
+    RATE_LIMIT_WINDOW_SECONDS: int = config(
+        "RATE_LIMIT_WINDOW_SECONDS", default=60, cast=int
+    )
 
     @classmethod
     def validate(cls) -> tuple[bool, list[str]]:
