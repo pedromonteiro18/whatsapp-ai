@@ -45,11 +45,15 @@ class Command(BaseCommand):
         self.stdout.write("")
 
         # Display configuration summary
+        # Determine AI provider from configuration
+        ai_provider = "OpenRouter" if Config.OPENROUTER_API_KEY else "OpenAI"
+        ai_model = Config.get_ai_model()
+
         self.stdout.write("Configuration Summary:")
-        self.stdout.write(f"  AI Provider: {Config.AI_PROVIDER}")
-        self.stdout.write(f"  AI Model: {Config.get_ai_model()}")
-        self.stdout.write(f"  Max Tokens: {Config.OPENAI_MAX_TOKENS}")
-        self.stdout.write(f"  Temperature: {Config.OPENAI_TEMPERATURE}")
+        self.stdout.write(f"  AI Provider: {ai_provider}")
+        self.stdout.write(f"  AI Model: {ai_model}")
+        self.stdout.write(f"  Max Tokens: {Config.AI_MAX_TOKENS or Config.OPENAI_MAX_TOKENS}")
+        self.stdout.write(f"  Temperature: {Config.AI_TEMPERATURE or Config.OPENAI_TEMPERATURE}")
         self.stdout.write(
             f"  Max Conversation History: {Config.MAX_CONVERSATION_HISTORY}"
         )
@@ -142,28 +146,31 @@ class Command(BaseCommand):
 
     def test_ai_api(self):
         """Test AI API credentials"""
-        self.stdout.write(f"Testing {Config.AI_PROVIDER.upper()} API credentials...")
+        # Determine which provider is configured
+        if Config.OPENROUTER_API_KEY:
+            provider = "OpenRouter"
+            api_key = Config.OPENROUTER_API_KEY
+            base_url = "https://openrouter.ai/api/v1"
+        else:
+            provider = "OpenAI"
+            api_key = Config.OPENAI_API_KEY
+            base_url = None  # Use default OpenAI base URL
+
+        self.stdout.write(f"Testing {provider} API credentials...")
         try:
-            if Config.AI_PROVIDER == "openai":
-                client = OpenAI(api_key=Config.OPENAI_API_KEY)
-                # Make a minimal API call to test credentials
-                client.models.list()
-                self.stdout.write(
-                    self.style.SUCCESS("  ✓ OpenAI API credentials valid")
-                )
-            elif Config.AI_PROVIDER == "anthropic":
-                # Anthropic test would go here
-                self.stdout.write(
-                    self.style.WARNING("  ⚠ Anthropic API test not implemented yet")
-                )
+            # For OpenRouter, we use OpenAI client with custom base URL
+            if provider == "OpenRouter":
+                client = OpenAI(api_key=api_key, base_url=base_url)
             else:
-                self.stdout.write(
-                    self.style.WARNING(f"  ⚠ Unknown AI provider: {Config.AI_PROVIDER}")
-                )
+                client = OpenAI(api_key=api_key)
+
+            # Make a minimal API call to test credentials
+            client.models.list()
+            self.stdout.write(
+                self.style.SUCCESS(f"  ✓ {provider} API credentials valid")
+            )
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(
-                    f"  ✗ {Config.AI_PROVIDER.upper()} API test failed: {e}"
-                )
+                self.style.ERROR(f"  ✗ {provider} API test failed: {e}")
             )
             raise CommandError("AI API credentials test failed")
