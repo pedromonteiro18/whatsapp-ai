@@ -43,28 +43,23 @@
     - Apply migrations to create database schema
     - _Requirements: 4.1, 4.2_
 
-- [ ] 4. Build AI service adapter layer
-  - [ ] 4.1 Create base AI adapter abstract class
+- [x] 4. Build AI service adapter layer
+  - [x] 4.1 Create base AI adapter abstract class
     - Define abstract methods: send_message(), validate_credentials()
     - Add common error handling and retry logic
     - _Requirements: 2.2, 2.3, 3.2, 3.3_
   
-  - [ ] 4.2 Implement OpenAI adapter
-    - Implement send_message() using OpenAI Python SDK
+  - [x] 4.2 Implement OpenRouter adapter (supports OpenAI and Anthropic)
+    - Implement send_message() using OpenAI Python SDK with OpenRouter base URL
     - Handle authentication with API key from configuration
-    - Format conversation history for OpenAI chat completion format
+    - Format conversation history for chat completion format
     - Implement error handling for rate limits and API errors
     - _Requirements: 2.2, 3.2, 3.3, 3.5_
   
-  - [ ] 4.3 Implement Anthropic adapter
-    - Implement send_message() using Anthropic Python SDK
-    - Handle authentication and message formatting
-    - Implement error handling specific to Anthropic API
-    - _Requirements: 2.2, 3.2, 3.3, 3.5_
-  
-  - [ ] 4.4 Create AI adapter factory
+  - [x] 4.3 Create AI adapter factory
     - Implement factory pattern to instantiate correct adapter based on configuration
     - Add validation to ensure selected provider is supported
+    - Support loading from environment variables or database
     - _Requirements: 2.2, 2.4_
 
 - [ ] 5. Implement conversation management with Redis
@@ -145,10 +140,10 @@
     - Log errors with appropriate severity levels
     - _Requirements: 6.1, 6.3_
   
-  - [ ] 8.2 Configure Django logging
+  - [x] 8.2 Configure Django logging
     - Set up logging configuration in settings.py
-    - Configure separate loggers for different components
-    - Add file and console handlers
+    - Configure separate loggers for different components (django, chatbot_core, whatsapp, ai_integration, celery)
+    - Add file and console handlers with rotation
     - _Requirements: 6.1, 6.4_
   
   - [ ] 8.3 Implement admin notification for critical errors
@@ -156,8 +151,8 @@
     - Configure notification channels (email, Slack, etc.)
     - _Requirements: 6.2_
 
-- [ ] 9. Set up Celery for asynchronous task processing
-  - [ ] 9.1 Configure Celery with Redis broker
+- [x] 9. Set up Celery for asynchronous task processing
+  - [x] 9.1 Configure Celery with Redis broker
     - Create celery.py configuration file
     - Configure Redis as message broker and result backend
     - Set up task routing and queue configuration
@@ -169,13 +164,13 @@
     - Configure task retry policies and timeouts
     - _Requirements: 3.1, 3.3, 4.3_
   
-  - [ ] 9.3 Add Celery monitoring
+  - [x] 9.3 Add Celery monitoring
     - Configure Celery beat for periodic tasks
     - Add task status tracking
     - _Requirements: 6.1_
 
 - [ ] 10. Create management commands and utilities
-  - [ ] 10.1 Create command to validate configuration
+  - [x] 10.1 Create command to validate configuration
     - Check all required environment variables are set
     - Test Twilio credentials
     - Test AI API credentials
@@ -192,9 +187,9 @@
     - Test AI API connectivity
     - _Requirements: 2.1, 2.4_
 
-- [ ] 11. Build admin interface
-  - [ ] 11.1 Register models with Django admin
-    - Create admin classes for Conversation, Message, AIConfiguration
+- [x] 11. Build admin interface
+  - [x] 11.1 Register models with Django admin
+    - Create admin classes for Conversation, Message, AIConfiguration, WebhookLog
     - Add list displays, filters, and search fields
     - Make api_key field read-only in admin for security
     - _Requirements: 2.1, 4.1_
@@ -231,10 +226,11 @@
     - Configure gunicorn for production
     - _Requirements: 7.1_
   
-  - [ ] 13.2 Create docker-compose.yml
-    - Define services for web, celery worker, PostgreSQL, Redis
+  - [x] 13.2 Create docker-compose.yml
+    - Define services for web, celery worker, celery beat, PostgreSQL, Redis
     - Configure environment variables and volumes
     - Set up networking between containers
+    - Add health checks for database and Redis
     - _Requirements: 7.1, 7.3_
   
   - [ ] 13.3 Create startup scripts
