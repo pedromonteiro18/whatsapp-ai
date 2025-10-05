@@ -6,6 +6,7 @@ and type-safe access to all application settings.
 """
 
 import logging
+
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
 
@@ -72,7 +73,8 @@ class Config:
             errors.append("TWILIO_WHATSAPP_NUMBER is required")
         elif not cls.TWILIO_WHATSAPP_NUMBER.startswith("whatsapp:"):
             errors.append(
-                "TWILIO_WHATSAPP_NUMBER must start with 'whatsapp:' (e.g., whatsapp:+14155238886)"
+                "TWILIO_WHATSAPP_NUMBER must start with 'whatsapp:' "
+                "(e.g., whatsapp:+14155238886)"
             )
 
         # Validate AI provider settings
@@ -120,7 +122,7 @@ class Config:
             )
             logger.error("Configuration validation failed: %s", errors)
             raise ImproperlyConfigured(error_message)
-        
+
         logger.info("Configuration validation passed successfully")
 
     @classmethod

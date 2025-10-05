@@ -5,12 +5,12 @@ This command checks all required environment variables and validates
 their values to ensure the application is properly configured.
 """
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
-import redis
 import psycopg2
-from twilio.rest import Client as TwilioClient
+import redis
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
 from openai import OpenAI
+from twilio.rest import Client as TwilioClient
 
 from chatbot_core.config import Config
 
@@ -137,9 +137,7 @@ class Command(BaseCommand):
                 )
             )
         except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"  ✗ Twilio credentials invalid: {e}")
-            )
+            self.stdout.write(self.style.ERROR(f"  ✗ Twilio credentials invalid: {e}"))
             raise CommandError("Twilio credentials test failed")
 
     def test_ai_api(self):
@@ -149,7 +147,7 @@ class Command(BaseCommand):
             if Config.AI_PROVIDER == "openai":
                 client = OpenAI(api_key=Config.OPENAI_API_KEY)
                 # Make a minimal API call to test credentials
-                response = client.models.list()
+                client.models.list()
                 self.stdout.write(
                     self.style.SUCCESS("  ✓ OpenAI API credentials valid")
                 )
@@ -164,6 +162,8 @@ class Command(BaseCommand):
                 )
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f"  ✗ {Config.AI_PROVIDER.upper()} API test failed: {e}")
+                self.style.ERROR(
+                    f"  ✗ {Config.AI_PROVIDER.upper()} API test failed: {e}"
+                )
             )
             raise CommandError("AI API credentials test failed")
