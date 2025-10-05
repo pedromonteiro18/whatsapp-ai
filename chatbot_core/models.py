@@ -28,9 +28,9 @@ class Conversation(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_phone = models.CharField(
-        max_length=20,
+        max_length=50,
         db_index=True,
-        help_text="User's phone number in E.164 format (e.g., +14155238886)",
+        help_text="User's phone number in WhatsApp format (e.g., whatsapp:+14155238886)",
     )
     started_at = models.DateTimeField(auto_now_add=True, db_index=True)
     last_activity = models.DateTimeField(auto_now=True, db_index=True)
