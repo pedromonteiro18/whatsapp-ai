@@ -419,7 +419,8 @@ docker-compose up -d --scale celery_worker=3
 
 **Issue**: Webhook not receiving messages
 - Verify Twilio webhook URL is configured correctly
-- Check that the application is accessible from the internet (use ngrok for local testing)
+- Check that the application is accessible from the internet (use ngrok/Serveo for local testing)
+- **Important**: Add your tunnel domain (ngrok/Serveo) to `ALLOWED_HOSTS` in .env and restart Django
 - Verify webhook signature validation is working
 
 **Issue**: AI API errors
