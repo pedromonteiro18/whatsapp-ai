@@ -478,9 +478,53 @@ docker-compose up -d --scale celery_worker=3
 
 To receive WhatsApp messages, you need to expose your application to the internet.
 
-### Option 1: Using ngrok (Local Development)
+### Option 1: Using Serveo (Free, No Sign-up)
 
-ngrok creates a secure tunnel to your local server.
+Serveo creates a secure SSH tunnel to your local server with no installation required.
+
+#### Step 1: Start Serveo Tunnel
+
+```bash
+# Make sure your Django server is running on port 8000
+ssh -o StrictHostKeyChecking=no -R 80:localhost:8000 serveo.net
+```
+
+You'll see output like:
+```
+Forwarding HTTP traffic from https://abc123xyz.serveo.net
+```
+
+#### Step 2: Update ALLOWED_HOSTS
+
+**CRITICAL**: Django will reject requests from the Serveo domain unless you add it to ALLOWED_HOSTS.
+
+1. Copy the Serveo URL (e.g., `abc123xyz.serveo.net`)
+2. Edit `.env` file:
+   ```bash
+   ALLOWED_HOSTS=localhost,127.0.0.1,abc123xyz.serveo.net
+   ```
+3. **Restart Django server** for changes to take effect:
+   ```bash
+   # Press Ctrl+C in Django terminal, then:
+   python manage.py runserver
+   ```
+
+#### Step 3: Configure Twilio Webhook
+
+1. Copy the HTTPS URL from Serveo (e.g., `https://abc123xyz.serveo.net`)
+2. Go to Twilio Console → Messaging → WhatsApp Sandbox
+3. Set webhook URL to: `https://abc123xyz.serveo.net/api/whatsapp/webhook/`
+4. Save
+
+**Important Notes**:
+- Serveo URLs change each time you restart the tunnel
+- You must update `.env` ALLOWED_HOSTS and restart Django whenever Serveo URL changes
+- Keep the Serveo terminal window open while testing
+- Free and requires no account or installation
+
+### Option 2: Using ngrok (Requires Account for Persistent URLs)
+
+ngrok creates a secure tunnel to your local server with optional persistent URLs.
 
 #### Step 1: Install ngrok
 
@@ -504,7 +548,16 @@ You'll see output like:
 Forwarding  https://abc123.ngrok.io -> http://localhost:8000
 ```
 
-#### Step 3: Configure Twilio Webhook
+#### Step 3: Update ALLOWED_HOSTS
+
+**CRITICAL**: Add the ngrok domain to ALLOWED_HOSTS in `.env`:
+```bash
+ALLOWED_HOSTS=localhost,127.0.0.1,abc123.ngrok.io
+```
+
+Then restart Django server.
+
+#### Step 4: Configure Twilio Webhook
 
 1. Copy the HTTPS URL from ngrok (e.g., `https://abc123.ngrok.io`)
 2. Go to Twilio Console → Messaging → WhatsApp Sandbox
