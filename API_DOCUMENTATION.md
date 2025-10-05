@@ -491,12 +491,24 @@ curl -X POST http://localhost:8000/api/whatsapp/webhook/ \
    - Check webhook URL is correct
    - Ensure URL is accessible from internet
 
-2. **Check ngrok (local development)**:
+2. **Check ngrok/Serveo (local development)**:
    ```bash
    # Restart ngrok
    ngrok http 8000
-   
-   # Update webhook URL in Twilio with new ngrok URL
+
+   # Or use Serveo (no sign-up required)
+   ssh -o StrictHostKeyChecking=no -R 80:localhost:8000 serveo.net
+
+   # Update webhook URL in Twilio with new tunnel URL
+   ```
+
+   **CRITICAL**: Add tunnel domain to ALLOWED_HOSTS:
+   ```bash
+   # Edit .env file
+   ALLOWED_HOSTS=localhost,127.0.0.1,your-tunnel-domain.ngrok.io
+
+   # Restart Django server for changes to take effect
+   python manage.py runserver  # or docker-compose restart web
    ```
 
 3. **Verify signature validation**:
