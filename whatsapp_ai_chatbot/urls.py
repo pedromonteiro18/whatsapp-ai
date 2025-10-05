@@ -18,10 +18,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from chatbot_core.health import HealthCheckView
 from whatsapp.views import WhatsAppWebhookView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Health check endpoint
+    path("health/", HealthCheckView.as_view(), name="health-check"),
     # WhatsApp webhook endpoint
     path(
         "api/whatsapp/webhook/", WhatsAppWebhookView.as_view(), name="whatsapp-webhook"
