@@ -1,3 +1,22 @@
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.mypy_cache
+  | \.venv
+  | venv
+  | _build
+  | build
+  | dist
+  | migrations
+)/
+'''
+
 [tool.django-stubs]
 django_settings_module = "whatsapp_ai_chatbot.settings"
 
