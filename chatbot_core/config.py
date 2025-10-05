@@ -25,15 +25,19 @@ class Config:
     TWILIO_WHATSAPP_NUMBER: str = config("TWILIO_WHATSAPP_NUMBER", default="")
 
     # AI Provider Settings
-    AI_PROVIDER: str = config("AI_PROVIDER", default="openai")
+    # OpenRouter provides unified access to multiple AI providers
+    OPENROUTER_API_KEY: str = config("OPENROUTER_API_KEY", default="")
+    AI_MODEL: str = config(
+        "AI_MODEL", default="openai/gpt-4"
+    )  # Format: provider/model-name
+    AI_MAX_TOKENS: int = config("AI_MAX_TOKENS", default=500, cast=int)
+    AI_TEMPERATURE: float = config("AI_TEMPERATURE", default=0.7, cast=float)
+
+    # Legacy OpenAI settings (for backward compatibility)
     OPENAI_API_KEY: str = config("OPENAI_API_KEY", default="")
     OPENAI_MODEL: str = config("OPENAI_MODEL", default="gpt-4")
     OPENAI_MAX_TOKENS: int = config("OPENAI_MAX_TOKENS", default=500, cast=int)
     OPENAI_TEMPERATURE: float = config("OPENAI_TEMPERATURE", default=0.7, cast=float)
-
-    # Anthropic Settings (for future use)
-    ANTHROPIC_API_KEY: str = config("ANTHROPIC_API_KEY", default="")
-    ANTHROPIC_MODEL: str = config("ANTHROPIC_MODEL", default="claude-3-sonnet-20240229")
 
     # Application Settings
     MAX_CONVERSATION_HISTORY: int = config(
@@ -78,23 +82,25 @@ class Config:
             )
 
         # Validate AI provider settings
-        if cls.AI_PROVIDER not in ["openai", "anthropic"]:
+        # Try OpenRouter first, fall back to legacy OpenAI
+        if not cls.OPENROUTER_API_KEY and not cls.OPENAI_API_KEY:
             errors.append(
-                f"AI_PROVIDER must be 'openai' or 'anthropic', got '{cls.AI_PROVIDER}'"
+                "Either OPENROUTER_API_KEY or OPENAI_API_KEY is required for AI integration"
             )
 
-        if cls.AI_PROVIDER == "openai" and not cls.OPENAI_API_KEY:
-            errors.append("OPENAI_API_KEY is required when using OpenAI provider")
-
-        if cls.AI_PROVIDER == "anthropic" and not cls.ANTHROPIC_API_KEY:
-            errors.append("ANTHROPIC_API_KEY is required when using Anthropic provider")
+        if not cls.AI_MODEL and not cls.OPENAI_MODEL:
+            errors.append("Either AI_MODEL or OPENAI_MODEL must be specified")
 
         # Validate numeric settings
-        if cls.OPENAI_MAX_TOKENS <= 0:
-            errors.append("OPENAI_MAX_TOKENS must be greater than 0")
+        max_tokens = cls.AI_MAX_TOKENS or cls.OPENAI_MAX_TOKENS
+        if max_tokens <= 0:
+            errors.append("AI_MAX_TOKENS (or OPENAI_MAX_TOKENS) must be greater than 0")
 
-        if not 0 <= cls.OPENAI_TEMPERATURE <= 2:
-            errors.append("OPENAI_TEMPERATURE must be between 0 and 2")
+        temperature = cls.AI_TEMPERATURE or cls.OPENAI_TEMPERATURE
+        if not 0 <= temperature <= 2:
+            errors.append(
+                "AI_TEMPERATURE (or OPENAI_TEMPERATURE) must be between 0 and 2"
+            )
 
         if cls.MAX_CONVERSATION_HISTORY <= 0:
             errors.append("MAX_CONVERSATION_HISTORY must be greater than 0")
@@ -128,39 +134,57 @@ class Config:
     @classmethod
     def get_ai_api_key(cls) -> str:
         """
-        Get the API key for the currently configured AI provider.
+        Get the AI API key.
+
+        Prioritizes OpenRouter, falls back to legacy OpenAI key.
 
         Returns:
-            str: The API key for the active provider
+            str: The API key
 
         Raises:
-            ImproperlyConfigured: If the API key is not set
+            ImproperlyConfigured: If no API key is configured
         """
-        if cls.AI_PROVIDER == "openai":
-            if not cls.OPENAI_API_KEY:
-                raise ImproperlyConfigured("OPENAI_API_KEY is not configured")
+        # Try OpenRouter first
+        if cls.OPENROUTER_API_KEY:
+            return cls.OPENROUTER_API_KEY
+
+        # Fall back to legacy OpenAI
+        if cls.OPENAI_API_KEY:
+            logger.warning(
+                "Using legacy OPENAI_API_KEY. Consider migrating to OPENROUTER_API_KEY"
+            )
             return cls.OPENAI_API_KEY
-        elif cls.AI_PROVIDER == "anthropic":
-            if not cls.ANTHROPIC_API_KEY:
-                raise ImproperlyConfigured("ANTHROPIC_API_KEY is not configured")
-            return cls.ANTHROPIC_API_KEY
-        else:
-            raise ImproperlyConfigured(f"Unknown AI provider: {cls.AI_PROVIDER}")
+
+        raise ImproperlyConfigured(
+            "No AI API key configured. Set OPENROUTER_API_KEY or OPENAI_API_KEY"
+        )
 
     @classmethod
     def get_ai_model(cls) -> str:
         """
-        Get the model name for the currently configured AI provider.
+        Get the AI model name.
+
+        Prioritizes AI_MODEL (OpenRouter format), falls back to legacy OPENAI_MODEL.
 
         Returns:
-            str: The model name for the active provider
+            str: The model name (e.g., 'openai/gpt-4', 'anthropic/claude-3-sonnet')
         """
-        if cls.AI_PROVIDER == "openai":
-            return cls.OPENAI_MODEL
-        elif cls.AI_PROVIDER == "anthropic":
-            return cls.ANTHROPIC_MODEL
-        else:
-            return "unknown"
+        # Try new AI_MODEL first
+        if cls.AI_MODEL:
+            return cls.AI_MODEL
+
+        # Fall back to legacy OPENAI_MODEL
+        if cls.OPENAI_MODEL:
+            logger.warning(
+                "Using legacy OPENAI_MODEL. Consider migrating to AI_MODEL with provider prefix"
+            )
+            # Add openai/ prefix if not present
+            model = cls.OPENAI_MODEL
+            if "/" not in model:
+                model = f"openai/{model}"
+            return model
+
+        return "openai/gpt-4"  # Ultimate fallback
 
     @classmethod
     def get_redis_url(cls) -> str:
