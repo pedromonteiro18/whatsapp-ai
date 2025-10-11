@@ -1,5 +1,8 @@
 """Business logic for booking system."""
 
+# pylint: disable=no-member
+# Django models have 'objects' and 'DoesNotExist' added dynamically
+
 from datetime import timedelta
 from decimal import Decimal
 from typing import Optional, Tuple
