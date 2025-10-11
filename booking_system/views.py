@@ -35,7 +35,7 @@ class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["-created_at"]
 
     @action(detail=True, methods=["get"])
-    def availability(self, request, pk=None):
+    def availability(self, request, pk=None):  # pylint: disable=unused-argument
         """
         Get available time slots for an activity.
 
@@ -77,7 +77,7 @@ class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by availability
         available_slots = []
         for slot in time_slots:
-            is_available, available_capacity = BookingService.check_availability(
+            is_available, _ = BookingService.check_availability(
                 str(slot.id), participants
             )
             if is_available:
@@ -127,7 +127,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
-    def confirm(self, request, pk=None):
+    def confirm(self, request, pk=None):  # pylint: disable=unused-argument
         """
         Confirm a pending booking.
 
@@ -152,7 +152,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
-    def cancel(self, request, pk=None):
+    def cancel(self, request, pk=None):  # pylint: disable=unused-argument
         """
         Cancel a booking.
 
