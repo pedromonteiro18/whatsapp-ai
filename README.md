@@ -4,6 +4,7 @@ A production-ready Django application that enables users to interact with AI ass
 
 ## Features
 
+### Core Features
 - **WhatsApp Integration**: Seamless integration with WhatsApp Business API via Twilio
 - **Multi-AI Provider Support**: Configurable adapters for OpenAI, Anthropic, and custom AI APIs via OpenRouter
 - **Conversation Management**: Maintains conversation context with automatic expiration using Redis
@@ -13,6 +14,16 @@ A production-ready Django application that enables users to interact with AI ass
 - **Scalability**: Horizontal scaling support with Redis caching and Celery workers
 - **Docker Support**: Complete Docker setup for easy deployment
 - **Admin Interface**: Django admin for managing configurations and monitoring conversations
+
+### Resort Activity Booking System
+- **Activity Management**: Create and manage resort activities with images, pricing, and availability
+- **WhatsApp Booking**: Conversational booking experience through WhatsApp chatbot
+- **AI-Powered Recommendations**: Personalized activity suggestions based on user preferences
+- **Real-Time Availability**: Dynamic time slot management with capacity tracking
+- **Two-Step Confirmation**: Bookings initiated via WhatsApp require web app confirmation
+- **React Web App**: Visual interface for browsing activities and managing bookings
+- **User Preferences**: Track and learn from user interests for better recommendations
+- **Admin Dashboard**: Comprehensive admin interface for managing activities, bookings, and time slots
 
 ## Architecture
 
@@ -48,11 +59,25 @@ whatsapp-ai-chatbot/
 │   │   ├── base.py            # Base adapter interface
 │   │   └── openrouter_adapter.py # OpenRouter adapter
 │   └── factory.py             # Adapter factory
+├── booking_system/            # Resort activity booking system
+│   ├── migrations/            # Database migrations
+│   ├── models.py              # Activity, Booking, TimeSlot models
+│   ├── admin.py               # Django admin configuration
+│   ├── services.py            # Business logic layer
+│   ├── serializers.py         # DRF serializers
+│   ├── views.py               # API viewsets
+│   ├── tasks.py               # Celery tasks for bookings
+│   └── urls.py                # URL routing
 ├── whatsapp_ai_chatbot/       # Django project settings
 │   ├── settings.py            # Django settings
 │   ├── urls.py                # URL routing
 │   ├── celery.py              # Celery configuration
 │   └── wsgi.py                # WSGI application
+├── .kiro/specs/               # Feature specifications
+│   └── resort-activity-booking/ # Booking system spec
+│       ├── requirements.md    # Feature requirements
+│       ├── design.md          # Architecture & design
+│       └── tasks.md           # Implementation tasks
 ├── requirements.txt           # Python dependencies
 ├── docker-compose.yml         # Docker services configuration
 ├── Dockerfile                 # Application container
@@ -257,6 +282,55 @@ The application consists of multiple services that work together:
 | **Redis** | 6379 | Cache and message broker for Celery |
 | **Celery Worker** | - | Background task processor for async message handling |
 | **Celery Beat** | - | Periodic task scheduler for cleanup jobs |
+
+## Booking System
+
+The Resort Activity Booking System enables guests to discover and book resort activities through both WhatsApp and a web interface.
+
+### Key Components
+
+1. **Data Models**
+   - **Activity**: Resort activities with pricing, duration, and capacity
+   - **ActivityImage**: Multiple images per activity
+   - **TimeSlot**: Available booking slots with capacity tracking
+   - **Booking**: User reservations with status workflow
+   - **UserPreference**: AI recommendation preferences
+
+2. **Admin Interface**
+   - Manage activities with inline image uploads
+   - View and manage time slots with availability status
+   - Process bookings with bulk confirm/cancel actions
+   - Track user preferences for recommendations
+
+3. **Booking Workflow**
+   - Guest browses activities via WhatsApp chatbot
+   - AI provides personalized recommendations
+   - Guest initiates booking through conversation
+   - System creates pending booking (30-minute hold)
+   - Guest confirms via web app within time limit
+   - System sends WhatsApp confirmation
+
+### Accessing the Admin
+
+1. Navigate to `http://localhost:8000/admin`
+2. Go to "Booking System" section
+3. Manage:
+   - Activities and images
+   - Time slots and availability
+   - Bookings and confirmations
+   - User preferences
+
+### Database Models
+
+The booking system includes the following models:
+
+- **Activity**: Core activity information (name, description, category, pricing)
+- **ActivityImage**: Activity photos with ordering and primary image designation
+- **TimeSlot**: Available booking times with capacity constraints
+- **Booking**: User reservations with status tracking (pending, confirmed, cancelled, completed)
+- **UserPreference**: User interests and preferences for AI recommendations
+
+For detailed specifications, see `.kiro/specs/resort-activity-booking/`
 
 ## Management Commands
 
