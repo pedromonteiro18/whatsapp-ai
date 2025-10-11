@@ -16,7 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 from chatbot_core.health import HealthCheckView
 from whatsapp.views import WhatsAppWebhookView
@@ -29,4 +29,6 @@ urlpatterns = [
     path(
         "api/whatsapp/webhook/", WhatsAppWebhookView.as_view(), name="whatsapp-webhook"
     ),
+    # Booking system API endpoints
+    path("api/v1/", include("booking_system.urls")),
 ]
