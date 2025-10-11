@@ -1,0 +1,466 @@
+# Implementation Plan
+
+- [x] 1. Set up booking_system Django app structure
+  - Create new Django app `booking_system` with standard structure
+  - Configure app in settings.py INSTALLED_APPS
+  - Create empty models.py, serializers.py, views.py, services.py, tasks.py files
+  - _Requirements: All requirements depend on this foundation_
+
+- [ ] 2. Implement core data models
+  - [x] 2.1 Create Activity model with all fields and indexes
+    - Implement Activity model with UUID primary key, name, slug, description, category, price, duration, capacity, location
+    - Add is_active, created_at, updated_at, metadata fields
+    - Define CATEGORY_CHOICES (watersports, spa, dining, adventure, wellness)
+    - Add Meta class with indexes for performance
+    - _Requirements: 1.1, 1.2, 1.3_
+  - [x] 2.2 Create ActivityImage model for activity photos
+    - Implement ActivityImage with ForeignKey to Activity
+    - Add image field with upload_to='activities/', alt_text, is_primary, order
+    - _Requirements: 1.1_
+  - [x] 2.3 Create TimeSlot model with constraints
+    - Implement TimeSlot with activity ForeignKey, start_time, end_time, capacity, booked_count
+    - Add CheckConstraint for booked_count <= capacity
+    - Add UniqueConstraint for activity + start_time
+    - Add indexes for querying
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
+  - [x] 2.4 Create Booking model with status tracking
+    - Implement Booking with user_phone, activity, time_slot ForeignKeys
+    - Add status field with choices (pending, confirmed, cancelled, completed, no_show)
+    - Add participants, special_requests, total_price, booking_source fields
+    - Add timestamp fields: created_at, confirmed_at, cancelled_at, expires_at
+    - Add indexes for user_phone, status, expires_at
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
+  - [x] 2.5 Create UserPreference model for AI recommendations
+    - Implement UserPreference with user_phone as unique field
+    - Add JSONFields for preferred_categories, preferred_times, budget_range
+    - Add interests TextField and metadata JSONField
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [x] 2.6 Create and run initial migrations
+    - Generate migrations for all models
+    - Run migrations to create database tables
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+
+- [x] 3. Implement Django admin interface
+  - [x] 3.1 Configure Activity admin with inline images
+    - Register Activity model with admin
+    - Create ActivityImageInline for managing images
+    - Add list_display, list_filter, search_fields
+    - Add prepopulated_fields for slug from name
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 11.1, 11.2, 11.3, 11.4, 11.5_
+  - [x] 3.2 Configure TimeSlot admin with filters
+    - Register TimeSlot with list_display showing activity, start_time, capacity, booked_count
+    - Add list_filter for activity, is_available, start_time
+    - Add readonly_fields for booked_count
+    - _Requirements: 1.5, 11.1, 11.2, 11.3_
+  - [x] 3.3 Configure Booking admin with actions
+    - Register Booking with list_display showing user_phone, activity, status, created_at
+    - Add list_filter for status, booking_source, created_at
+    - Add search_fields for user_phone
+    - Create admin actions for confirm_booking and cancel_booking
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 11.1, 11.2, 11.3, 11.4, 11.5_
+
+- [ ] 4. Implement BookingService business logic
+  - [ ] 4.1 Create check_availability method
+    - Implement method to query TimeSlot and check capacity vs booked_count
+    - Return boolean and available capacity
+    - Handle edge cases (past dates, inactive activities)
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 5.4_
+  - [ ] 4.2 Create create_booking method with transaction
+    - Implement atomic transaction for booking creation
+    - Validate availability before creating
+    - Increment TimeSlot.booked_count
+    - Set expires_at to 30 minutes from now for pending bookings
+    - Calculate total_price from activity price and participants
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 10.1, 10.2, 10.4_
+  - [ ] 4.3 Create confirm_booking method
+    - Update booking status to 'confirmed'
+    - Set confirmed_at timestamp
+    - Validate booking belongs to user_phone
+    - Validate booking is in 'pending' status
+    - _Requirements: 7.3, 8.4, 10.1, 10.2_
+  - [ ] 4.4 Create cancel_booking method
+    - Update booking status to 'cancelled'
+    - Set cancelled_at timestamp
+    - Decrement TimeSlot.booked_count in transaction
+    - Validate cancellation deadline (24 hours before activity)
+    - _Requirements: 7.4, 7.5, 7.6, 10.1, 10.2_
+  - [ ] 4.5 Create get_user_bookings method
+    - Query bookings filtered by user_phone
+    - Support optional status filtering
+    - Order by created_at descending
+    - Use select_related for activity and time_slot
+    - _Requirements: 7.1, 8.4_
+
+- [ ] 5. Implement DRF serializers
+  - [ ] 5.1 Create ActivitySerializer with nested images
+    - Serialize all Activity fields
+    - Nest ActivityImage serializer for images list
+    - Add computed field for primary_image
+    - _Requirements: 1.1, 1.2, 1.3_
+  - [ ] 5.2 Create TimeSlotSerializer
+    - Serialize TimeSlot fields
+    - Add computed field for available_capacity
+    - Format datetime fields appropriately
+    - _Requirements: 4.1, 4.5_
+  - [ ] 5.3 Create BookingSerializer with validation
+    - Serialize all Booking fields
+    - Nest Activity and TimeSlot serializers (read-only)
+    - Add validation for participants <= time_slot capacity
+    - Add validation for future time slots only
+    - _Requirements: 5.1, 5.2, 5.3, 7.1, 7.2, 12.1_
+  - [ ] 5.4 Create BookingCreateSerializer
+    - Accept activity_id, time_slot_id, participants, special_requests
+    - Validate time slot availability in validate() method
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 12.1, 12.4_
+
+- [ ] 6. Implement API viewsets and endpoints
+  - [ ] 6.1 Create ActivityViewSet with filtering
+    - Implement list, retrieve actions
+    - Add DjangoFilterBackend for category, price range filtering
+    - Add SearchFilter for name and description
+    - Add OrderingFilter for price, created_at
+    - Implement custom availability action
+    - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 4.1_
+  - [ ] 6.2 Create BookingViewSet with custom actions
+    - Implement list (filtered by user_phone), retrieve, create actions
+    - Add custom confirm action (POST /bookings/{id}/confirm/)
+    - Add custom cancel action (POST /bookings/{id}/cancel/)
+    - Use BookingService methods for business logic
+    - Add permission checks for user_phone matching
+    - _Requirements: 5.1, 5.2, 5.3, 7.1, 7.2, 7.3, 7.4, 8.4_
+  - [ ] 6.3 Create URL routing
+    - Register ActivityViewSet and BookingViewSet with router
+    - Configure URL patterns in booking_system/urls.py
+    - Include booking_system URLs in main urls.py
+    - _Requirements: All API requirements_
+
+- [ ] 7. Implement authentication system
+  - [ ] 7.1 Create OTP generation and storage in Redis
+    - Implement generate_otp() function (6-digit random number)
+    - Store OTP in Redis with phone number as key, 5-minute expiry
+    - _Requirements: 8.1, 8.2_
+  - [ ] 7.2 Create request-otp API endpoint
+    - Accept phone number in request
+    - Validate phone number format
+    - Generate and store OTP
+    - Send OTP via WhatsApp using existing Twilio integration
+    - Implement rate limiting (max 3 requests per 10 minutes per phone)
+    - _Requirements: 8.1, 8.2, 12.1_
+  - [ ] 7.3 Create verify-otp API endpoint
+    - Accept phone number and OTP code
+    - Verify OTP from Redis
+    - Create session token and store in Redis
+    - Return session token to client
+    - Delete OTP from Redis after verification
+    - _Requirements: 8.2, 8.3, 8.4_
+  - [ ] 7.4 Create custom authentication class
+    - Implement DRF authentication class to validate session tokens
+    - Check token in Redis and extract phone number
+    - Set request.user_phone for authenticated requests
+    - _Requirements: 8.3, 8.4, 8.5_
+  - [ ] 7.5 Create permission class for booking access
+    - Implement IsOwnerOrReadOnly permission
+    - Check request.user_phone matches booking.user_phone
+    - _Requirements: 8.4_
+
+- [ ] 8. Implement NotificationService for WhatsApp
+  - [ ] 8.1 Create send_booking_created method
+    - Format message with booking details and web app link
+    - Use existing Twilio integration to send WhatsApp message
+    - Include booking ID, activity name, time, price
+    - Include expiry warning (30 minutes)
+    - _Requirements: 5.3, 9.1_
+  - [ ] 8.2 Create send_booking_confirmed method
+    - Format confirmation message with activity details
+    - Include location, time, duration, requirements
+    - _Requirements: 7.3, 9.2_
+  - [ ] 8.3 Create send_booking_cancelled method
+    - Format cancellation message
+    - Include reason if provided
+    - _Requirements: 7.4, 9.3_
+  - [ ] 8.4 Integrate notifications with BookingService
+    - Call NotificationService methods from BookingService
+    - Handle notification failures gracefully (log but don't block)
+    - _Requirements: 9.1, 9.2, 9.3, 12.2_
+
+- [ ] 9. Implement Celery tasks for background jobs
+  - [ ] 9.1 Create expire_pending_bookings task
+    - Query bookings with status='pending' and expires_at < now
+    - Update status to 'cancelled'
+    - Decrement TimeSlot.booked_count
+    - Schedule to run every 5 minutes via Celery Beat
+    - _Requirements: 5.5, 10.1, 10.2_
+  - [ ] 9.2 Create send_reminder_24h task
+    - Query confirmed bookings with time_slot.start_time in 24 hours
+    - Send reminder via NotificationService
+    - Mark booking as reminded in metadata
+    - Schedule to run every hour via Celery Beat
+    - _Requirements: 9.4_
+  - [ ] 9.3 Create send_reminder_1h task
+    - Query confirmed bookings with time_slot.start_time in 1 hour
+    - Send final reminder with location details
+    - Schedule to run every 15 minutes via Celery Beat
+    - _Requirements: 9.5_
+  - [ ] 9.4 Configure Celery Beat schedule
+    - Add periodic tasks to settings.py CELERY_BEAT_SCHEDULE
+    - Configure task intervals
+    - _Requirements: 9.4, 9.5_
+
+- [ ] 10. Implement RecommendationService with AI
+  - [ ] 10.1 Create get_recommendations method
+    - Load UserPreference for user_phone
+    - Get conversation history from Redis
+    - Query available activities matching preferences
+    - Use AI adapter to rank activities with explanations
+    - Return top N recommendations with reasoning
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ] 10.2 Create update_preferences_from_conversation method
+    - Extract preferences from conversation using AI
+    - Update or create UserPreference record
+    - Parse categories, times, budget from natural language
+    - _Requirements: 3.1, 3.5_
+  - [ ] 10.3 Create RecommendationViewSet
+    - Implement GET /api/v1/recommendations/ endpoint
+    - Use RecommendationService to get personalized suggestions
+    - Require authentication
+    - _Requirements: 3.2, 3.3, 3.4_
+
+- [ ] 11. Extend WhatsApp chatbot for booking intents
+  - [ ] 11.1 Create BookingMessageProcessor class
+    - Define intent patterns for browse, book, check, cancel, recommend
+    - Implement detect_intent method using keyword matching
+    - Implement process method to route to handlers
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.1, 5.2_
+  - [ ] 11.2 Implement handle_browse method
+    - Query activities filtered by user message (category, etc.)
+    - Format response with activity list
+    - Include prices, durations, brief descriptions
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+  - [ ] 11.3 Implement handle_booking method with conversation state
+    - Use multi-turn conversation to collect: activity, time, participants
+    - Store conversation state in Redis
+    - Validate each step before proceeding
+    - Call BookingService.create_booking when complete
+    - Send confirmation via NotificationService
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  - [ ] 11.4 Implement handle_check_booking method
+    - Query user's bookings via BookingService
+    - Format response with booking list
+    - Include status, activity, time for each
+    - _Requirements: 7.1_
+  - [ ] 11.5 Implement handle_recommendations method
+    - Call RecommendationService.get_recommendations
+    - Format AI-generated recommendations
+    - Include reasoning for each suggestion
+    - _Requirements: 3.2, 3.3, 3.4_
+  - [ ] 11.6 Integrate BookingMessageProcessor into webhook handler
+    - Modify existing webhook view to detect booking intents
+    - Route booking-related messages to BookingMessageProcessor
+    - Maintain backward compatibility with existing chatbot
+    - _Requirements: All WhatsApp requirements_
+
+- [ ] 12. Set up React frontend project
+  - [ ] 12.1 Initialize React app with TypeScript and Vite
+    - Create new React project with Vite
+    - Configure TypeScript
+    - Install dependencies: react-router-dom, axios, @tanstack/react-query
+    - _Requirements: All frontend requirements_
+  - [ ] 12.2 Set up TailwindCSS and shadcn/ui
+    - Install and configure TailwindCSS
+    - Initialize shadcn/ui
+    - Install core shadcn/ui components: button, card, input, dialog, badge, select, slider
+    - Configure theme and styling
+    - _Requirements: All frontend requirements_
+  - [ ] 12.3 Create project structure
+    - Create folders: components, pages, hooks, services, contexts, types, utils
+    - Set up routing with react-router-dom
+    - Create basic layout components (Header, Footer, Navigation)
+    - _Requirements: All frontend requirements_
+
+- [ ] 13. Implement authentication UI
+  - [ ] 13.1 Create PhoneInput component
+    - Build phone number input with validation
+    - Use shadcn/ui Input component
+    - Add format validation (E.164 format)
+    - _Requirements: 8.1, 8.2_
+  - [ ] 13.2 Create OTPForm component
+    - Build OTP input using shadcn/ui InputOTP
+    - Implement 6-digit code entry
+    - Add resend OTP functionality
+    - Show countdown timer
+    - _Requirements: 8.2, 8.3_
+  - [ ] 13.3 Create LoginPage
+    - Combine PhoneInput and OTPForm
+    - Implement two-step flow (request OTP → verify OTP)
+    - Handle API calls to /auth/request-otp and /auth/verify-otp
+    - Store session token in localStorage
+    - Redirect to bookings page on success
+    - _Requirements: 8.1, 8.2, 8.3_
+  - [ ] 13.4 Create AuthContext and useAuth hook
+    - Implement context for auth state (isAuthenticated, userPhone, token)
+    - Create login, logout, checkAuth methods
+    - Persist auth state in localStorage
+    - Provide auth context to app
+    - _Requirements: 8.3, 8.4, 8.5_
+  - [ ] 13.5 Create ProtectedRoute component
+    - Wrap routes requiring authentication
+    - Redirect to login if not authenticated
+    - _Requirements: 8.4_
+
+- [ ] 14. Implement activity browsing UI
+  - [ ] 14.1 Create ActivityCard component
+    - Display activity image, name, price, duration
+    - Use shadcn/ui Card component
+    - Add "View Details" button
+    - Make responsive for mobile
+    - _Requirements: 6.1_
+  - [ ] 14.2 Create ActivityFilter component
+    - Implement category filter using shadcn/ui Select
+    - Implement price range filter using shadcn/ui Slider
+    - Implement search input using shadcn/ui Input
+    - Emit filter changes to parent
+    - _Requirements: 6.1, 6.3_
+  - [ ] 14.3 Create ActivityGrid component
+    - Display grid of ActivityCard components
+    - Implement responsive grid layout
+    - Add loading state using shadcn/ui Skeleton
+    - Add empty state when no activities
+    - _Requirements: 6.1_
+  - [ ] 14.4 Create ActivitiesPage
+    - Combine ActivityFilter and ActivityGrid
+    - Fetch activities from API using React Query
+    - Apply filters to API query
+    - Handle loading and error states
+    - _Requirements: 6.1, 6.3, 6.4_
+  - [ ] 14.5 Create useActivities hook
+    - Implement React Query hook for fetching activities
+    - Support filtering parameters
+    - Handle caching and refetching
+    - _Requirements: 6.1, 6.3_
+
+- [ ] 15. Implement activity detail and availability UI
+  - [ ] 15.1 Create AvailabilityCalendar component
+    - Display calendar for next 14 days
+    - Show available time slots for selected date
+    - Use shadcn/ui Calendar component
+    - Color-code availability (available, limited, full)
+    - Allow time slot selection
+    - _Requirements: 4.1, 4.5, 6.5_
+  - [ ] 15.2 Create ActivityDetail component
+    - Display full activity information
+    - Show image carousel using shadcn/ui Carousel
+    - Display description, requirements, location
+    - Show price and duration prominently
+    - _Requirements: 2.2, 6.1_
+  - [ ] 15.3 Create ActivityDetailPage
+    - Combine ActivityDetail and AvailabilityCalendar
+    - Fetch activity by ID from API
+    - Fetch availability from API
+    - Add "Book Now" button (redirects to login if not authenticated)
+    - _Requirements: 2.2, 4.1, 6.1, 6.5_
+
+- [ ] 16. Implement booking management UI
+  - [ ] 16.1 Create BookingCard component
+    - Display booking summary (activity, time, status)
+    - Use shadcn/ui Card and Badge components
+    - Show different styling for pending vs confirmed
+    - Add action buttons based on status
+    - _Requirements: 7.1, 7.2_
+  - [ ] 16.2 Create BookingActions component
+    - Implement "Confirm" button using shadcn/ui AlertDialog
+    - Implement "Decline" button using shadcn/ui AlertDialog
+    - Show confirmation dialogs before actions
+    - Handle API calls to confirm/cancel endpoints
+    - Show success/error toasts using shadcn/ui Toast
+    - _Requirements: 7.3, 7.4, 7.5, 7.6_
+  - [ ] 16.3 Create BookingList component
+    - Display list of BookingCard components
+    - Group by status (pending, confirmed, past)
+    - Add filtering tabs
+    - Handle empty states
+    - _Requirements: 7.1_
+  - [ ] 16.4 Create BookingsPage
+    - Fetch user bookings from API using React Query
+    - Display BookingList with BookingActions
+    - Highlight pending bookings requiring action
+    - Auto-refresh on booking actions
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
+  - [ ] 16.5 Create useBookings hook
+    - Implement React Query hook for fetching bookings
+    - Implement mutations for confirm/cancel actions
+    - Handle optimistic updates
+    - Invalidate queries on mutations
+    - _Requirements: 7.1, 7.3, 7.4_
+
+- [ ] 17. Implement API service layer
+  - [ ] 17.1 Create axios instance with interceptors
+    - Configure base URL from environment variable
+    - Add request interceptor to attach auth token
+    - Add response interceptor for error handling
+    - Handle 401 errors (redirect to login)
+    - _Requirements: 8.3, 8.4, 12.1, 12.2_
+  - [ ] 17.2 Create activity API methods
+    - Implement getActivities, getActivity, getAvailability
+    - Type all requests and responses
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [ ] 17.3 Create booking API methods
+    - Implement getBookings, createBooking, confirmBooking, cancelBooking
+    - Type all requests and responses
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+  - [ ] 17.4 Create auth API methods
+    - Implement requestOTP, verifyOTP, logout
+    - Type all requests and responses
+    - _Requirements: 8.1, 8.2, 8.3_
+
+- [ ] 18. Implement error handling and user feedback
+  - [ ] 18.1 Create ErrorBoundary component
+    - Catch React errors and display fallback UI
+    - Log errors for debugging
+    - _Requirements: 12.1, 12.5_
+  - [ ] 18.2 Create NotificationContext with Toast
+    - Implement context for showing notifications
+    - Use shadcn/ui Toast component
+    - Provide showSuccess, showError, showInfo methods
+    - _Requirements: 9.1, 9.2, 9.3, 12.1, 12.2_
+  - [ ] 18.3 Add error handling to all API calls
+    - Display user-friendly error messages
+    - Handle network errors, validation errors, auth errors
+    - Show alternative options when available (e.g., alternative time slots)
+    - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
+  - [ ] 18.4 Create Loading component
+    - Implement loading spinner using shadcn/ui
+    - Use in pages during data fetching
+    - _Requirements: All frontend requirements_
+
+- [ ] 19. Configure environment and deployment
+  - [ ] 19.1 Add booking system settings to Django settings.py
+    - Add BOOKING_PENDING_TIMEOUT_MINUTES setting
+    - Add BOOKING_CANCELLATION_DEADLINE_HOURS setting
+    - Add BOOKING_REMINDER settings
+    - Configure MEDIA_URL and MEDIA_ROOT for activity images
+    - Update CORS_ALLOWED_ORIGINS for frontend
+    - _Requirements: All requirements_
+  - [ ] 19.2 Create .env.example files
+    - Document all required environment variables for backend
+    - Document all required environment variables for frontend
+    - _Requirements: All requirements_
+  - [ ] 19.3 Update requirements.txt
+    - Add Pillow for image handling
+    - Add any new dependencies
+    - _Requirements: 1.1_
+  - [ ] 19.4 Create README for booking system
+    - Document setup instructions
+    - Document API endpoints
+    - Document environment variables
+    - _Requirements: All requirements_
+
+- [ ] 20. Create sample data and admin commands
+  - [ ] 20.1 Create management command to seed activities
+    - Create command to populate sample activities
+    - Include various categories (watersports, spa, dining, etc.)
+    - Add sample images (or placeholders)
+    - _Requirements: 1.1, 1.2, 1.3_
+  - [ ] 20.2 Create management command to generate time slots
+    - Create command to generate time slots for activities
+    - Support date range and recurrence patterns
+    - _Requirements: 1.5, 4.1_
