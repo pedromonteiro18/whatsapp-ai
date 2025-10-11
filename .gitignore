@@ -50,12 +50,6 @@ logs/*.log
 *.swo
 *~
 
-# Kiro specs (development planning files)
-.kiro/
-
-# Development/test apps
-booking_system/
-
 # OS
 .DS_Store
 Thumbs.db
