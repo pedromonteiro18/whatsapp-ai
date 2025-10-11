@@ -24,6 +24,7 @@ python-decouple==3.8
 # Utilities
 requests==2.32.5
 python-dateutil==2.9.0.post0
+Pillow==11.1.0
 
 # Production server
 gunicorn==23.0.0

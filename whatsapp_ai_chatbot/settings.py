@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "chatbot_core",
     "whatsapp",
     "ai_integration",
+    "booking_system",
 ]
 
 MIDDLEWARE = [
@@ -281,7 +282,9 @@ else:
 
 # HTTP Strict Transport Security (HSTS)
 if not DEBUG:
-    SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)  # 1 year
+    SECURE_HSTS_SECONDS = config(
+        "SECURE_HSTS_SECONDS", default=31536000, cast=int
+    )  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
