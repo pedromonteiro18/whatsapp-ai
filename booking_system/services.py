@@ -91,13 +91,13 @@ class BookingService:
         # Get activity and time slot with select_for_update to prevent race conditions
         try:
             activity = Activity.objects.get(id=activity_id)
-        except Activity.DoesNotExist:
-            raise ValueError(f"Activity with id {activity_id} not found")
+        except Activity.DoesNotExist as exc:
+            raise ValueError(f"Activity with id {activity_id} not found") from exc
 
         try:
             time_slot = TimeSlot.objects.select_for_update().get(id=time_slot_id)
-        except TimeSlot.DoesNotExist:
-            raise ValueError(f"Time slot with id {time_slot_id} not found")
+        except TimeSlot.DoesNotExist as exc:
+            raise ValueError(f"Time slot with id {time_slot_id} not found") from exc
 
         # Validate activity is active
         if not activity.is_active:
@@ -169,8 +169,8 @@ class BookingService:
         """
         try:
             booking = Booking.objects.select_for_update().get(id=booking_id)
-        except Booking.DoesNotExist:
-            raise ValueError(f"Booking with id {booking_id} not found")
+        except Booking.DoesNotExist as exc:
+            raise ValueError(f"Booking with id {booking_id} not found") from exc
 
         # Validate booking belongs to user
         if booking.user_phone != user_phone:
@@ -217,8 +217,8 @@ class BookingService:
                 .select_related("time_slot")
                 .get(id=booking_id)
             )
-        except Booking.DoesNotExist:
-            raise ValueError(f"Booking with id {booking_id} not found")
+        except Booking.DoesNotExist as exc:
+            raise ValueError(f"Booking with id {booking_id} not found") from exc
 
         # Validate booking belongs to user
         if booking.user_phone != user_phone:
