@@ -61,7 +61,7 @@ class BookingService:
 
     @staticmethod
     @transaction.atomic
-    def create_booking(
+    def create_booking(  # pylint: disable=too-many-arguments
         user_phone: str,
         activity_id: str,
         time_slot_id: str,
