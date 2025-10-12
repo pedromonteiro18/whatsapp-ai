@@ -214,18 +214,18 @@
     - Configure task intervals
     - _Requirements: 9.4, 9.5_
 
-- [ ] 10. Implement RecommendationService with AI
-  - [ ] 10.1 Create RecommendationService class in booking_system/services.py
+- [x] 10. Implement RecommendationService with AI
+  - [x] 10.1 Create RecommendationService class in booking_system/services.py
     - Create get_recommendations method to load UserPreference and query activities
     - Use AI adapter to rank activities with explanations
     - Return top N recommendations with reasoning
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
-  - [ ] 10.2 Create update_preferences_from_conversation method
+  - [x] 10.2 Create update_preferences_from_conversation method
     - Extract preferences from conversation using AI
     - Update or create UserPreference record
     - Parse categories, times, budget from natural language
     - _Requirements: 3.1, 3.5_
-  - [ ] 10.3 Create RecommendationViewSet in booking_system/views.py
+  - [x] 10.3 Create RecommendationViewSet in booking_system/views.py
     - Implement GET /api/v1/recommendations/ endpoint
     - Use RecommendationService to get personalized suggestions
     - Require authentication via SessionTokenAuthentication
