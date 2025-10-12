@@ -118,9 +118,7 @@ class BaseAIAdapter(ABC):
         """
         pass
 
-    def _retry_with_exponential_backoff(
-        self, func, *args, **kwargs
-    ) -> Dict[str, Any]:
+    def _retry_with_exponential_backoff(self, func, *args, **kwargs) -> Dict[str, Any]:
         """
         Execute a function with exponential backoff retry logic.
 
@@ -144,7 +142,8 @@ class BaseAIAdapter(ABC):
                 last_exception = e
                 wait_time = e.retry_after if e.retry_after else (2**attempt)
                 logger.warning(
-                    f"Rate limit hit, retrying in {wait_time}s (attempt {attempt + 1}/{self.max_retries})"
+                    f"Rate limit hit, retrying in {wait_time}s "
+                    f"(attempt {attempt + 1}/{self.max_retries})"
                 )
                 if attempt < self.max_retries - 1:
                     time.sleep(wait_time)
@@ -152,7 +151,8 @@ class BaseAIAdapter(ABC):
                 last_exception = e
                 wait_time = 2**attempt
                 logger.warning(
-                    f"API error: {e}, retrying in {wait_time}s (attempt {attempt + 1}/{self.max_retries})"
+                    f"API error: {e}, retrying in {wait_time}s "
+                    f"(attempt {attempt + 1}/{self.max_retries})"
                 )
                 if attempt < self.max_retries - 1:
                     time.sleep(wait_time)
@@ -184,7 +184,9 @@ class BaseAIAdapter(ABC):
         elif isinstance(error, TimeoutError):
             return "This is taking longer than expected. Let me try again..."
         elif isinstance(error, APIError):
-            return "I'm having trouble connecting right now. Please try again in a moment."
+            return (
+                "I'm having trouble connecting right now. Please try again in a moment."
+            )
         else:
             return "An unexpected error occurred. Please try again."
 

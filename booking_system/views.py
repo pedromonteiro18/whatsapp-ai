@@ -124,7 +124,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         """Create a new booking for authenticated user."""
         # Add user_phone to request for serializer context
         if hasattr(request, "auth") and request.auth:
-            request.user_phone = request.auth
+            request.user_phone = request.auth  # pyright: ignore[reportAttributeAccessIssue]
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
