@@ -65,12 +65,12 @@ class ActivityAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Price")
     def price_display(self, obj):
         """Display formatted price."""
         return f"{obj.currency} {obj.price}"
 
-    price_display.short_description = "Price"
-
+    @admin.display(description="Duration")
     def duration_display(self, obj):
         """Display formatted duration."""
         hours = obj.duration_minutes // 60
@@ -78,8 +78,6 @@ class ActivityAdmin(admin.ModelAdmin):
         if hours > 0:
             return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
         return f"{minutes}m"
-
-    duration_display.short_description = "Duration"
 
 
 @admin.register(ActivityImage)
@@ -91,6 +89,7 @@ class ActivityImageAdmin(admin.ModelAdmin):
     search_fields = ("activity__name", "alt_text")
     ordering = ("activity", "order")
 
+    @admin.display(description="Preview")
     def image_preview(self, obj):
         """Display image thumbnail."""
         if obj.image:
@@ -99,8 +98,6 @@ class ActivityImageAdmin(admin.ModelAdmin):
                 obj.image.url,
             )
         return "-"
-
-    image_preview.short_description = "Preview"
 
 
 @admin.register(TimeSlot)
@@ -133,6 +130,7 @@ class TimeSlotAdmin(admin.ModelAdmin):
         ("Metadata", {"fields": ("created_at",), "classes": ("collapse",)}),
     )
 
+    @admin.display(description="Availability")
     def availability_status(self, obj):
         """Display availability status with color."""
         available = obj.capacity - obj.booked_count
@@ -149,8 +147,6 @@ class TimeSlotAdmin(admin.ModelAdmin):
         return format_html(
             '<span style="color: {}; font-weight: bold;">{}</span>', color, status
         )
-
-    availability_status.short_description = "Availability"
 
 
 @admin.register(Booking)
@@ -222,8 +218,9 @@ class BookingAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Status")
     def status_display(self, obj):
-        """Display status with color coding."""
+        """Display booking status with color coding."""
         colors = {
             "pending": "orange",
             "confirmed": "green",
@@ -237,8 +234,6 @@ class BookingAdmin(admin.ModelAdmin):
             color,
             obj.get_status_display(),
         )
-
-    status_display.short_description = "Status"
 
     @admin.action(description="Confirm selected bookings")
     def confirm_bookings(self, request, queryset):
@@ -296,10 +291,9 @@ class UserPreferenceAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Preferred Categories")
     def categories_display(self, obj):
         """Display preferred categories as comma-separated list."""
         if obj.preferred_categories:
             return ", ".join(obj.preferred_categories)
         return "-"
-
-    categories_display.short_description = "Preferred Categories"

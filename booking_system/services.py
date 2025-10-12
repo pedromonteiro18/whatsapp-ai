@@ -159,7 +159,7 @@ class BookingService:
             logger.error(
                 "Failed to send booking created notification for booking %s: %s",
                 booking.id,
-                str(e)
+                str(e),
             )
 
         return booking
@@ -212,7 +212,7 @@ class BookingService:
             logger.error(
                 "Failed to send booking confirmed notification for booking %s: %s",
                 booking.id,
-                str(e)
+                str(e),
             )
 
         return booking
@@ -283,7 +283,7 @@ class BookingService:
             logger.error(
                 "Failed to send booking cancelled notification for booking %s: %s",
                 booking.id,
-                str(e)
+                str(e),
             )
 
         return booking

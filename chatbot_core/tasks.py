@@ -30,9 +30,7 @@ logger = logging.getLogger(__name__)
     acks_late=True,  # Acknowledge after task completes
     reject_on_worker_lost=True,  # Reject if worker crashes
 )
-def process_whatsapp_message(
-    self: Any, user_phone: str, message_content: str
-) -> bool:
+def process_whatsapp_message(self: Any, user_phone: str, message_content: str) -> bool:
     """
     Process an incoming WhatsApp message asynchronously.
 
@@ -70,9 +68,7 @@ def process_whatsapp_message(
             )
             return True
         else:
-            logger.error(
-                f"[Task {task_id}] Failed to process message for {user_phone}"
-            )
+            logger.error(f"[Task {task_id}] Failed to process message for {user_phone}")
             return False
 
     except WhatsAppClientError as e:
@@ -94,7 +90,7 @@ def process_whatsapp_message(
         # Retry with exponential backoff (60s, 120s, 240s)
         try:
             # Calculate exponential backoff: 60 * 2^retry_count
-            retry_delay = 60 * (2 ** self.request.retries)
+            retry_delay = 60 * (2**self.request.retries)
             raise self.retry(exc=e, countdown=retry_delay)
         except self.MaxRetriesExceededError:
             logger.error(

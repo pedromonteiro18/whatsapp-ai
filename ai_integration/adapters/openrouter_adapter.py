@@ -107,9 +107,7 @@ class OpenRouterAdapter(BaseAIAdapter):
             )
 
             # Make API call with retry logic
-            response = self._retry_with_exponential_backoff(
-                self._make_request, params
-            )
+            response = self._retry_with_exponential_backoff(self._make_request, params)
 
             return response
 

@@ -61,7 +61,9 @@ class ConversationManager:
         """
         return f"conversation:{user_id}"
 
-    def get_history(self, user_id: str, limit: Optional[int] = None) -> List[Dict[str, str]]:
+    def get_history(
+        self, user_id: str, limit: Optional[int] = None
+    ) -> List[Dict[str, str]]:
         """
         Retrieve conversation history for a user.
 
@@ -104,7 +106,11 @@ class ConversationManager:
             return []
 
     def add_message(
-        self, user_id: str, role: str, content: str, metadata: Optional[Dict[str, Any]] = None
+        self,
+        user_id: str,
+        role: str,
+        content: str,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Add a message to the conversation history.
@@ -198,16 +204,16 @@ class ConversationManager:
             ttl = ttl or self.ttl_seconds
 
             result = self.redis.expire(key, ttl)
-            logger.info(f"Set expiration for user {user_id} to {ttl}s (result={result})")
+            logger.info(
+                f"Set expiration for user {user_id} to {ttl}s (result={result})"
+            )
             return result
 
         except redis.RedisError as e:
             logger.error(f"Redis error setting expiration for user {user_id}: {e}")
             return False
         except Exception as e:
-            logger.error(
-                f"Unexpected error setting expiration for user {user_id}: {e}"
-            )
+            logger.error(f"Unexpected error setting expiration for user {user_id}: {e}")
             return False
 
     def get_message_count(self, user_id: str) -> int:
@@ -252,7 +258,5 @@ class ConversationManager:
             logger.error(f"Redis error checking existence for user {user_id}: {e}")
             return False
         except Exception as e:
-            logger.error(
-                f"Unexpected error checking existence for user {user_id}: {e}"
-            )
+            logger.error(f"Unexpected error checking existence for user {user_id}: {e}")
             return False

@@ -52,8 +52,12 @@ class Command(BaseCommand):
         self.stdout.write("Configuration Summary:")
         self.stdout.write(f"  AI Provider: {ai_provider}")
         self.stdout.write(f"  AI Model: {ai_model}")
-        self.stdout.write(f"  Max Tokens: {Config.AI_MAX_TOKENS or Config.OPENAI_MAX_TOKENS}")
-        self.stdout.write(f"  Temperature: {Config.AI_TEMPERATURE or Config.OPENAI_TEMPERATURE}")
+        self.stdout.write(
+            f"  Max Tokens: {Config.AI_MAX_TOKENS or Config.OPENAI_MAX_TOKENS}"
+        )
+        self.stdout.write(
+            f"  Temperature: {Config.AI_TEMPERATURE or Config.OPENAI_TEMPERATURE}"
+        )
         self.stdout.write(
             f"  Max Conversation History: {Config.MAX_CONVERSATION_HISTORY}"
         )
@@ -170,7 +174,5 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"  ✓ {provider} API credentials valid")
             )
         except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"  ✗ {provider} API test failed: {e}")
-            )
+            self.stdout.write(self.style.ERROR(f"  ✗ {provider} API test failed: {e}"))
             raise CommandError("AI API credentials test failed")

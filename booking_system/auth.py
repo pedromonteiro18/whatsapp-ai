@@ -209,14 +209,15 @@ def check_rate_limit(phone_number: str) -> Tuple[bool, int]:
     """
     try:
         key = f"rate_limit:{phone_number}"
-        current_count = redis_client.get(key)
+        current_count_raw = redis_client.get(key)
 
-        if current_count is None:
+        if current_count_raw is None:
             # First request
             redis_client.setex(key, RATE_LIMIT_WINDOW, 1)
             return True, RATE_LIMIT_MAX_REQUESTS - 1
 
-        current_count = int(current_count)
+        # Redis returns bytes or str, convert to int
+        current_count = int(current_count_raw)
 
         if current_count >= RATE_LIMIT_MAX_REQUESTS:
             logger.warning("Rate limit exceeded for phone %s", phone_number)

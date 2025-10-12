@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from typing import cast
 
 from decouple import config
 
@@ -30,7 +31,9 @@ SECRET_KEY = config(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = cast(str, config("ALLOWED_HOSTS", default="localhost,127.0.0.1")).split(
+    ","
+)
 
 
 # Application definition
@@ -304,9 +307,12 @@ CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_NAME = "whatsapp_ai_csrftoken"
 
 # CORS Settings (for webhook endpoints)
-CORS_ALLOWED_ORIGINS = config(
-    "CORS_ALLOWED_ORIGINS",
-    default="https://api.twilio.com",
+CORS_ALLOWED_ORIGINS = cast(
+    str,
+    config(
+        "CORS_ALLOWED_ORIGINS",
+        default="https://api.twilio.com",
+    ),
 ).split(",")
 CORS_ALLOW_CREDENTIALS = False
 

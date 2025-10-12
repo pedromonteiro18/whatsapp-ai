@@ -21,10 +21,9 @@ class ConversationAdmin(admin.ModelAdmin):
     readonly_fields = ["id", "started_at", "last_activity"]
     date_hierarchy = "started_at"
 
+    @admin.display(description="Messages")
     def message_count(self, obj):
         return obj.get_message_count()
-
-    message_count.short_description = "Messages"
 
 
 @admin.register(Message)
@@ -35,10 +34,9 @@ class MessageAdmin(admin.ModelAdmin):
     readonly_fields = ["id", "timestamp"]
     date_hierarchy = "timestamp"
 
+    @admin.display(description="Content")
     def content_preview(self, obj):
         return obj.content[:100] + "..." if len(obj.content) > 100 else obj.content
-
-    content_preview.short_description = "Content"
 
 
 @admin.register(AIConfiguration)
@@ -58,7 +56,7 @@ class AIConfigurationAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         """Make api_key read-only after creation for security."""
         if obj:  # Editing an existing object
-            return self.readonly_fields + ["api_key"]
+            return tuple(self.readonly_fields) + ("api_key",)
         return self.readonly_fields
 
 

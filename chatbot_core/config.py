@@ -6,6 +6,7 @@ and type-safe access to all application settings.
 """
 
 import logging
+from typing import cast
 
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
@@ -20,25 +21,27 @@ class Config:
     """
 
     # WhatsApp/Twilio Settings
-    TWILIO_ACCOUNT_SID: str = config("TWILIO_ACCOUNT_SID", default="")
-    TWILIO_AUTH_TOKEN: str = config("TWILIO_AUTH_TOKEN", default="")
-    TWILIO_WHATSAPP_NUMBER: str = config("TWILIO_WHATSAPP_NUMBER", default="")
+    TWILIO_ACCOUNT_SID: str = cast(str, config("TWILIO_ACCOUNT_SID", default=""))
+    TWILIO_AUTH_TOKEN: str = cast(str, config("TWILIO_AUTH_TOKEN", default=""))
+    TWILIO_WHATSAPP_NUMBER: str = cast(
+        str, config("TWILIO_WHATSAPP_NUMBER", default="")
+    )
     SKIP_WEBHOOK_SIGNATURE_VERIFICATION: bool = config(
         "SKIP_WEBHOOK_SIGNATURE_VERIFICATION", default=False, cast=bool
     )
 
     # AI Provider Settings
     # OpenRouter provides unified access to multiple AI providers
-    OPENROUTER_API_KEY: str = config("OPENROUTER_API_KEY", default="")
-    AI_MODEL: str = config(
-        "AI_MODEL", default="openai/gpt-4"
+    OPENROUTER_API_KEY: str = cast(str, config("OPENROUTER_API_KEY", default=""))
+    AI_MODEL: str = cast(
+        str, config("AI_MODEL", default="openai/gpt-4")
     )  # Format: provider/model-name
     AI_MAX_TOKENS: int = config("AI_MAX_TOKENS", default=500, cast=int)
     AI_TEMPERATURE: float = config("AI_TEMPERATURE", default=0.7, cast=float)
 
     # Legacy OpenAI settings (for backward compatibility)
-    OPENAI_API_KEY: str = config("OPENAI_API_KEY", default="")
-    OPENAI_MODEL: str = config("OPENAI_MODEL", default="gpt-4")
+    OPENAI_API_KEY: str = cast(str, config("OPENAI_API_KEY", default=""))
+    OPENAI_MODEL: str = cast(str, config("OPENAI_MODEL", default="gpt-4"))
     OPENAI_MAX_TOKENS: int = config("OPENAI_MAX_TOKENS", default=500, cast=int)
     OPENAI_TEMPERATURE: float = config("OPENAI_TEMPERATURE", default=0.7, cast=float)
 
@@ -52,7 +55,7 @@ class Config:
     CONVERSATION_TTL_SECONDS: int = SESSION_TIMEOUT_MINUTES * 60
 
     # Redis Settings
-    REDIS_HOST: str = config("REDIS_HOST", default="localhost")
+    REDIS_HOST: str = cast(str, config("REDIS_HOST", default="localhost"))
     REDIS_PORT: int = config("REDIS_PORT", default=6379, cast=int)
     REDIS_DB: int = config("REDIS_DB", default=0, cast=int)
 

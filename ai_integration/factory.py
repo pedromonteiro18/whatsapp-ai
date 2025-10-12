@@ -71,9 +71,7 @@ class AIAdapterFactory:
             return AIAdapterFactory._create_from_env(**override_params)
         elif config_source == "db":
             if not config_name:
-                raise ValueError(
-                    "config_name is required when config_source='db'"
-                )
+                raise ValueError("config_name is required when config_source='db'")
             return AIAdapterFactory._create_from_db(config_name, **override_params)
         else:
             raise ValueError(

@@ -31,6 +31,27 @@ app.conf.beat_schedule = {
             "expires": 3600,  # Task expires after 1 hour if not executed
         },
     },
+    "expire-pending-bookings": {
+        "task": "booking_system.tasks.expire_pending_bookings",
+        "schedule": 300.0,  # Every 5 minutes (in seconds)
+        "options": {
+            "expires": 240,  # Task expires after 4 minutes if not executed
+        },
+    },
+    "send-reminder-24h": {
+        "task": "booking_system.tasks.send_reminder_24h",
+        "schedule": crontab(minute="0"),  # Every hour at minute 0
+        "options": {
+            "expires": 3000,  # Task expires after 50 minutes if not executed
+        },
+    },
+    "send-reminder-1h": {
+        "task": "booking_system.tasks.send_reminder_1h",
+        "schedule": crontab(minute="*/15"),  # Every 15 minutes
+        "options": {
+            "expires": 840,  # Task expires after 14 minutes if not executed
+        },
+    },
 }
 
 
