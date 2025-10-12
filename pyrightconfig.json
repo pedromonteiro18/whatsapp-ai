@@ -1,0 +1,45 @@
+{
+  "include": [
+    "booking_system",
+    "chatbot_core",
+    "whatsapp",
+    "ai_integration",
+    "whatsapp_ai_chatbot"
+  ],
+  "exclude": [
+    "**/migrations",
+    "**/__pycache__",
+    ".venv",
+    "venv"
+  ],
+  "ignore": [
+    "**/migrations"
+  ],
+  "defineConstant": {
+    "DEBUG": true
+  },
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownParameterType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownMemberType": false,
+  "reportAssignmentType": false,
+  "reportGeneralTypeIssues": false,
+  "stubPath": "typings",
+  "venvPath": ".",
+  "venv": "venv",
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Darwin",
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Darwin",
+      "extraPaths": [
+        "."
+      ]
+    }
+  ]
+}
