@@ -55,8 +55,23 @@ def process_whatsapp_message(self: Any, user_phone: str, message_content: str) -
     )
 
     try:
-        # Initialize WhatsApp client and message processor
+        # Initialize WhatsApp client
         whatsapp_client = WhatsAppClient()
+
+        # Try booking processor first for booking-related intents
+        from .booking_processor import BookingMessageProcessor
+
+        booking_processor = BookingMessageProcessor(whatsapp_client)
+        is_booking_intent = booking_processor.process(user_phone, message_content)
+
+        if is_booking_intent:
+            # Booking processor handled it
+            logger.info(
+                f"[Task {task_id}] Message handled by booking processor for {user_phone}"
+            )
+            return True
+
+        # Fall through to general AI chatbot for non-booking messages
         processor = MessageProcessor(whatsapp_client)
 
         # Process the message
