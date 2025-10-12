@@ -5,7 +5,9 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .authentication import SessionTokenAuthentication
 from .models import Activity, Booking, TimeSlot
+from .permissions import IsAuthenticated, IsOwnerOrReadOnly
 from .serializers import (
     ActivitySerializer,
     BookingCreateSerializer,
@@ -92,21 +94,25 @@ class BookingViewSet(viewsets.ModelViewSet):
     ViewSet for Booking model.
 
     Provides CRUD operations and custom actions for confirm/cancel.
+    Requires authentication via session token.
     """
 
     serializer_class = BookingSerializer
+    authentication_classes = [SessionTokenAuthentication]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     filterset_fields = ["status"]
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        """Filter bookings by user_phone from request."""
-        user_phone = self.request.query_params.get("user_phone")
-        if not user_phone:
-            return Booking.objects.none()
+        """Filter bookings by authenticated user's phone number."""
+        # Get phone number from authenticated request
+        if hasattr(self.request, "auth") and self.request.auth:
+            user_phone = self.request.auth
+            return Booking.objects.filter(user_phone=user_phone).select_related(
+                "activity", "time_slot"
+            )
 
-        return Booking.objects.filter(user_phone=user_phone).select_related(
-            "activity", "time_slot"
-        )
+        return Booking.objects.none()
 
     def get_serializer_class(self):
         """Use BookingCreateSerializer for create action."""
@@ -115,7 +121,11 @@ class BookingViewSet(viewsets.ModelViewSet):
         return BookingSerializer
 
     def create(self, request, *args, **kwargs):
-        """Create a new booking."""
+        """Create a new booking for authenticated user."""
+        # Add user_phone to request for serializer context
+        if hasattr(request, "auth") and request.auth:
+            request.user_phone = request.auth
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -131,15 +141,17 @@ class BookingViewSet(viewsets.ModelViewSet):
         """
         Confirm a pending booking.
 
-        Requires user_phone in request data for authorization.
+        Uses authenticated user's phone number for authorization.
         """
         booking = self.get_object()
-        user_phone = request.data.get("user_phone")
 
-        if not user_phone:
+        # Get phone number from authenticated request
+        if hasattr(request, "auth") and request.auth:
+            user_phone = request.auth
+        else:
             return Response(
-                {"error": "user_phone is required"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Authentication required"},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         try:
@@ -156,17 +168,19 @@ class BookingViewSet(viewsets.ModelViewSet):
         """
         Cancel a booking.
 
-        Requires user_phone in request data for authorization.
+        Uses authenticated user's phone number for authorization.
         Optional reason in request data.
         """
         booking = self.get_object()
-        user_phone = request.data.get("user_phone")
         reason = request.data.get("reason", "")
 
-        if not user_phone:
+        # Get phone number from authenticated request
+        if hasattr(request, "auth") and request.auth:
+            user_phone = request.auth
+        else:
             return Response(
-                {"error": "user_phone is required"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Authentication required"},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         try:
