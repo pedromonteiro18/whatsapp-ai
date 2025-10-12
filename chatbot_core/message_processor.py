@@ -114,7 +114,8 @@ class MessageProcessor:
                     metadata=metadata,
                 )
 
-                # Update conversation last_activity (auto_now handles this, but explicit save ensures it)
+                # Update conversation last_activity
+                # (auto_now handles this, but explicit save ensures it)
                 conversation.save()
 
             # Save messages to Redis
@@ -139,15 +140,23 @@ class MessageProcessor:
                 exc_info=True,
             )
 
-            match e:
-                case AuthenticationError():
-                    error_message = "The service is temporarily unavailable. Please try again later."
-                case RateLimitError():
-                    error_message = "We're experiencing high demand. Please try again in a few moments."
-                case TimeoutError():
-                    error_message = "The request timed out. Please try again."
-                case APIError():
-                    error_message = "There was an error processing your request. Please try again later."
+            if isinstance(e, AuthenticationError):
+                error_message = (
+                    "The service is temporarily unavailable. "
+                    "Please try again later."
+                )
+            elif isinstance(e, RateLimitError):
+                error_message = (
+                    "We're experiencing high demand. "
+                    "Please try again in a few moments."
+                )
+            elif isinstance(e, TimeoutError):
+                error_message = "The request timed out. Please try again."
+            else:  # APIError
+                error_message = (
+                    "There was an error processing your request. "
+                    "Please try again later."
+                )
 
             try:
                 self.whatsapp_client.send_message(user_phone, error_message)
@@ -166,8 +175,7 @@ class MessageProcessor:
             )
             try:
                 self.whatsapp_client.send_message(
-                    user_phone,
-                    "An unexpected error occurred. Please try again later."
+                    user_phone, "An unexpected error occurred. Please try again later."
                 )
                 return True  # Notified user of unexpected error
             except Exception:
