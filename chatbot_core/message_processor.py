@@ -142,8 +142,7 @@ class MessageProcessor:
 
             if isinstance(e, AuthenticationError):
                 error_message = (
-                    "The service is temporarily unavailable. "
-                    "Please try again later."
+                    "The service is temporarily unavailable. " "Please try again later."
                 )
             elif isinstance(e, RateLimitError):
                 error_message = (

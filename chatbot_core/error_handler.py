@@ -52,12 +52,8 @@ class ErrorHandler:
         ErrorCategory.WHATSAPP: (
             "There was a problem sending the message. Please try again."
         ),
-        ErrorCategory.DATABASE: (
-            "A technical issue occurred. Please try again later."
-        ),
-        ErrorCategory.SYSTEM: (
-            "An unexpected error occurred. Please try again later."
-        ),
+        ErrorCategory.DATABASE: ("A technical issue occurred. Please try again later."),
+        ErrorCategory.SYSTEM: ("An unexpected error occurred. Please try again later."),
         ErrorCategory.CONFIGURATION: (
             "The service is temporarily unavailable. Please contact support."
         ),
