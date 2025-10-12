@@ -197,7 +197,7 @@ class Sanitizer:
         # Check for dangerous patterns
         for pattern in cls.DANGEROUS_PATTERNS:
             if pattern.search(content):
-                logger.warning(f"Dangerous pattern detected in content")
+                logger.warning("Dangerous pattern detected in content")
                 return False
 
         # Check for excessive special characters (potential obfuscation)
@@ -205,7 +205,9 @@ class Sanitizer:
             1 for c in content if not c.isalnum() and not c.isspace()
         )
         if len(content) > 0 and special_char_count / len(content) > 0.3:
-            logger.warning(f"Excessive special characters in content: {special_char_count}/{len(content)}")
+            logger.warning(
+                f"Excessive special characters in content: {special_char_count}/{len(content)}"
+            )
             return False
 
         return True

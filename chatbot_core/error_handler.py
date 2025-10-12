@@ -12,8 +12,6 @@ import traceback
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from django.conf import settings
-
 logger = logging.getLogger(__name__)
 
 
@@ -47,12 +45,25 @@ class ErrorHandler:
 
     # User-friendly error messages by category
     USER_MESSAGES = {
-        ErrorCategory.AI: "I'm having trouble processing your request right now. Please try again in a moment.",
-        ErrorCategory.WHATSAPP: "There was a problem sending the message. Please try again.",
-        ErrorCategory.DATABASE: "A technical issue occurred. Please try again later.",
-        ErrorCategory.SYSTEM: "An unexpected error occurred. Please try again later.",
-        ErrorCategory.CONFIGURATION: "The service is temporarily unavailable. Please contact support.",
-        ErrorCategory.WEBHOOK: "There was a problem receiving your message. Please try again.",
+        ErrorCategory.AI: (
+            "I'm having trouble processing your request right now. "
+            "Please try again in a moment."
+        ),
+        ErrorCategory.WHATSAPP: (
+            "There was a problem sending the message. Please try again."
+        ),
+        ErrorCategory.DATABASE: (
+            "A technical issue occurred. Please try again later."
+        ),
+        ErrorCategory.SYSTEM: (
+            "An unexpected error occurred. Please try again later."
+        ),
+        ErrorCategory.CONFIGURATION: (
+            "The service is temporarily unavailable. Please contact support."
+        ),
+        ErrorCategory.WEBHOOK: (
+            "There was a problem receiving your message. Please try again."
+        ),
     }
 
     @classmethod
@@ -135,7 +146,11 @@ class ErrorHandler:
         )
 
         # Add context details
-        context_str = ", ".join(f"{k}={v}" for k, v in context.items() if k not in ["error_type", "error_message", "category"])
+        context_str = ", ".join(
+            f"{k}={v}"
+            for k, v in context.items()
+            if k not in ["error_type", "error_message", "category"]
+        )
         if context_str:
             log_message += f" | Context: {context_str}"
 
@@ -196,15 +211,11 @@ class ErrorHandler:
         """
         # Check rate limiting to prevent alert spam
         if not cls._should_send_alert(error, category):
-            logger.debug(
-                f"Skipping alert for {type(error).__name__} - rate limited"
-            )
+            logger.debug(f"Skipping alert for {type(error).__name__} - rate limited")
             return False
 
         # Format alert message
-        alert_title = (
-            f"[{severity.value.upper()}] {category.value.capitalize()} Error"
-        )
+        alert_title = f"[{severity.value.upper()}] {category.value.capitalize()} Error"
         alert_body = cls._format_alert_message(error, category, severity, context)
 
         # Log critical alert with full details
@@ -221,9 +232,7 @@ class ErrorHandler:
         return True
 
     @classmethod
-    def _should_send_alert(
-        cls, error: Exception, category: ErrorCategory
-    ) -> bool:
+    def _should_send_alert(cls, error: Exception, category: ErrorCategory) -> bool:
         """
         Check if alert should be sent based on rate limiting.
 
@@ -237,9 +246,6 @@ class ErrorHandler:
             True if alert should be sent
         """
         try:
-            import hashlib
-            import time
-
             import redis
 
             from .config import Config
@@ -373,7 +379,9 @@ class ErrorHandler:
             error=error,
             category=ErrorCategory.AI,
             severity=severity,
-            context={"message_content": message_content[:100] if message_content else None},
+            context={
+                "message_content": message_content[:100] if message_content else None
+            },
             user_phone=user_phone,
         )
 

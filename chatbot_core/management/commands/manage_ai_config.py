@@ -7,7 +7,7 @@ Provides utilities for:
 - Listing and viewing AI configurations
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         )
 
         # List configurations
-        list_parser = subparsers.add_parser(
+        subparsers.add_parser(
             "list",
             help="List all AI configurations",
         )
@@ -70,9 +70,7 @@ class Command(BaseCommand):
         update_parser.add_argument("--api-key", help="New API key")
         update_parser.add_argument("--model", help="New model name")
         update_parser.add_argument("--max-tokens", type=int, help="New maximum tokens")
-        update_parser.add_argument(
-            "--temperature", type=float, help="New temperature"
-        )
+        update_parser.add_argument("--temperature", type=float, help="New temperature")
         update_parser.add_argument(
             "--activate", action="store_true", help="Activate this configuration"
         )
@@ -126,9 +124,7 @@ class Command(BaseCommand):
 
         for config in configs:
             status = "ACTIVE" if config.is_active else "inactive"
-            self.stdout.write(
-                f"\n{self.style.WARNING(config.name)} [{status}]"
-            )
+            self.stdout.write(f"\n{self.style.WARNING(config.name)} [{status}]")
             self.stdout.write(f"  Provider: {config.provider}")
             self.stdout.write(f"  Model: {config.model_name}")
             self.stdout.write(f"  Max Tokens: {config.max_tokens}")
@@ -143,9 +139,7 @@ class Command(BaseCommand):
         Args:
             options: Command options
         """
-        self.stdout.write(
-            self.style.SUCCESS("=== Creating AI Configuration ===\n")
-        )
+        self.stdout.write(self.style.SUCCESS("=== Creating AI Configuration ===\n"))
 
         name = options["name"]
         provider = options["provider"]
@@ -157,16 +151,16 @@ class Command(BaseCommand):
         # Check if configuration already exists
         if AIConfiguration.objects.filter(name=name).exists():
             self.stdout.write(
-                self.style.ERROR(
-                    f"\nError: Configuration '{name}' already exists"
-                )
+                self.style.ERROR(f"\nError: Configuration '{name}' already exists")
             )
-            self.stdout.write("Use the 'update' action to modify existing configuration")
+            self.stdout.write(
+                "Use the 'update' action to modify existing configuration"
+            )
             return
 
         # Create configuration
         try:
-            config = AIConfiguration.objects.create(
+            AIConfiguration.objects.create(
                 name=name,
                 provider=provider,
                 api_key=api_key,
@@ -180,9 +174,7 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"\n✓ Configuration '{name}' created successfully")
             )
             self.stdout.write("\nTest the configuration with:")
-            self.stdout.write(
-                f"  python manage.py manage_ai_config test --name {name}"
-            )
+            self.stdout.write(f"  python manage.py manage_ai_config test --name {name}")
             self.stdout.write("\nActivate it with:")
             self.stdout.write(
                 f"  python manage.py manage_ai_config update --name {name} --activate"
@@ -200,9 +192,7 @@ class Command(BaseCommand):
         Args:
             options: Command options
         """
-        self.stdout.write(
-            self.style.SUCCESS("=== Updating AI Configuration ===\n")
-        )
+        self.stdout.write(self.style.SUCCESS("=== Updating AI Configuration ===\n"))
 
         name = options["name"]
 
@@ -265,9 +255,7 @@ class Command(BaseCommand):
         Args:
             options: Command options
         """
-        self.stdout.write(
-            self.style.SUCCESS("=== Testing AI Configuration ===\n")
-        )
+        self.stdout.write(self.style.SUCCESS("=== Testing AI Configuration ===\n"))
 
         use_env = options.get("use_env", False)
         config_name = options.get("name")
@@ -323,15 +311,9 @@ class Command(BaseCommand):
 
             if "metadata" in response:
                 tokens = response["metadata"].get("tokens_used", {})
-                self.stdout.write(
-                    f"\nTokens used: {tokens.get('total_tokens', 'N/A')}"
-                )
+                self.stdout.write(f"\nTokens used: {tokens.get('total_tokens', 'N/A')}")
 
         except AuthenticationError as e:
-            self.stdout.write(
-                self.style.ERROR(f"\n✗ Authentication failed: {e}")
-            )
+            self.stdout.write(self.style.ERROR(f"\n✗ Authentication failed: {e}"))
         except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"\n✗ Test failed: {e}")
-            )
+            self.stdout.write(self.style.ERROR(f"\n✗ Test failed: {e}"))

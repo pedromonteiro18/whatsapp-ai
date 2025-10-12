@@ -18,7 +18,9 @@ from whatsapp.client import WhatsAppClient, WhatsAppClientError
 class Command(BaseCommand):
     """Test WhatsApp integration with Twilio."""
 
-    help = "Test WhatsApp integration by sending test messages and verifying configuration"
+    help = (
+        "Test WhatsApp integration by sending test messages and verifying configuration"
+    )
 
     def add_arguments(self, parser: CommandParser) -> None:
         """
@@ -60,9 +62,7 @@ class Command(BaseCommand):
 
         # If only checking config, exit here
         if options["check_config"]:
-            self.stdout.write(
-                self.style.SUCCESS("\n✓ Configuration check complete")
-            )
+            self.stdout.write(self.style.SUCCESS("\n✓ Configuration check complete"))
             return
 
         # Send test message
@@ -101,9 +101,7 @@ class Command(BaseCommand):
                 return False
             else:
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"✓ TWILIO_ACCOUNT_SID: {account_sid[:10]}..."
-                    )
+                    self.style.SUCCESS(f"✓ TWILIO_ACCOUNT_SID: {account_sid[:10]}...")
                 )
 
             if not auth_token:
@@ -126,7 +124,7 @@ class Command(BaseCommand):
 
             # Try to initialize WhatsApp client
             try:
-                client = WhatsAppClient()
+                WhatsAppClient()
                 self.stdout.write(
                     self.style.SUCCESS("✓ WhatsApp client initialized successfully")
                 )
@@ -139,9 +137,7 @@ class Command(BaseCommand):
             return True
 
         except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"✗ Configuration check failed: {e}")
-            )
+            self.stdout.write(self.style.ERROR(f"✗ Configuration check failed: {e}"))
             return False
 
     def _send_test_message(self, to_number: str, message: str) -> None:
@@ -168,21 +164,13 @@ class Command(BaseCommand):
                         f"\n✓ Test message sent successfully to {to_number}"
                     )
                 )
-                self.stdout.write(
-                    "\nCheck your WhatsApp to confirm message receipt."
-                )
+                self.stdout.write("\nCheck your WhatsApp to confirm message receipt.")
             else:
                 self.stdout.write(
-                    self.style.ERROR(
-                        f"\n✗ Failed to send test message to {to_number}"
-                    )
+                    self.style.ERROR(f"\n✗ Failed to send test message to {to_number}")
                 )
 
         except WhatsAppClientError as e:
-            self.stdout.write(
-                self.style.ERROR(f"\n✗ WhatsApp client error: {e}")
-            )
+            self.stdout.write(self.style.ERROR(f"\n✗ WhatsApp client error: {e}"))
         except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"\n✗ Unexpected error: {e}")
-            )
+            self.stdout.write(self.style.ERROR(f"\n✗ Unexpected error: {e}"))

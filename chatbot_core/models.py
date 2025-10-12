@@ -6,7 +6,9 @@ messages, AI configuration, and webhook logs.
 """
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from django.db import models
 
@@ -21,29 +23,29 @@ class Conversation(models.Model):
     Tracks conversation state and provides a container for messages.
     """
 
-    if TYPE_CHECKING:
-        # Type hints for reverse relations
-        messages: "Manager[Message]"
-        webhook_logs: "Manager[WebhookLog]"
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user_phone = models.CharField(
+    id: UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_phone: str = models.CharField(
         max_length=50,
         db_index=True,
         help_text="User's phone number in WhatsApp format (e.g., whatsapp:+14155238886)",
     )
-    started_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    last_activity = models.DateTimeField(auto_now=True, db_index=True)
-    is_active = models.BooleanField(
+    started_at: datetime = models.DateTimeField(auto_now_add=True, db_index=True)
+    last_activity: datetime = models.DateTimeField(auto_now=True, db_index=True)
+    is_active: bool = models.BooleanField(
         default=True,
         db_index=True,
         help_text="Whether this conversation is currently active",
     )
-    metadata = models.JSONField(
+    metadata: dict = models.JSONField(
         default=dict,
         blank=True,
         help_text="Additional metadata about the conversation",
     )
+
+    if TYPE_CHECKING:
+        # Type hints for reverse relations
+        messages: "Manager[Message]"
+        webhook_logs: "Manager[WebhookLog]"
 
     class Meta:
         ordering = ["-last_activity"]
