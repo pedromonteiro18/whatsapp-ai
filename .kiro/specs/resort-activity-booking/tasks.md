@@ -232,38 +232,38 @@
     - Add URL routing in booking_system/urls.py
     - _Requirements: 3.2, 3.3, 3.4_
 
-- [ ] 11. Extend WhatsApp chatbot for booking intents
-  - [ ] 11.1 Create BookingMessageProcessor class in chatbot_core/
+- [x] 11. Extend WhatsApp chatbot for booking intents
+  - [x] 11.1 Create BookingMessageProcessor class in chatbot_core/
     - Create new file chatbot_core/booking_processor.py
     - Define intent patterns for browse, book, check, cancel, recommend
     - Implement detect_intent method using keyword matching
     - Implement process method to route to handlers
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.1, 5.2_
-  - [ ] 11.2 Implement handle_browse method
+  - [x] 11.2 Implement handle_browse method
     - Query activities from booking_system.models.Activity
     - Filter by user message (category, etc.)
     - Format response with activity list
     - Include prices, durations, brief descriptions
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
-  - [ ] 11.3 Implement handle_booking method with conversation state
+  - [x] 11.3 Implement handle_booking method with conversation state
     - Use multi-turn conversation to collect: activity, time, participants
     - Store conversation state in Redis
     - Validate each step before proceeding
     - Call BookingService.create_booking when complete
     - Send confirmation via NotificationService
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
-  - [ ] 11.4 Implement handle_check_booking method
+  - [x] 11.4 Implement handle_check_booking method
     - Query user's bookings via BookingService.get_user_bookings
     - Format response with booking list
     - Include status, activity, time for each
     - _Requirements: 7.1_
-  - [ ] 11.5 Implement handle_recommendations method
+  - [x] 11.5 Implement handle_recommendations method
     - Call RecommendationService.get_recommendations
     - Format AI-generated recommendations
     - Include reasoning for each suggestion
     - _Requirements: 3.2, 3.3, 3.4_
-  - [ ] 11.6 Integrate BookingMessageProcessor into webhook handler
-    - Modify whatsapp/views.py WhatsAppWebhookView
+  - [x] 11.6 Integrate BookingMessageProcessor into webhook handler
+    - Modify chatbot_core/tasks.py process_whatsapp_message
     - Detect booking intents before routing to general chatbot
     - Route booking-related messages to BookingMessageProcessor
     - Maintain backward compatibility with existing chatbot
