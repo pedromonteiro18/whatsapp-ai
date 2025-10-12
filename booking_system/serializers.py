@@ -1,5 +1,7 @@
 """DRF serializers for booking system."""
 
+import re
+
 from rest_framework import serializers
 
 from .models import Activity, ActivityImage, Booking, TimeSlot, UserPreference
@@ -206,3 +208,50 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
             "metadata",
         ]
         read_only_fields = ["id", "last_updated"]
+
+
+# Authentication Serializers
+
+
+class RequestOTPSerializer(serializers.Serializer):
+    """Serializer for OTP request."""
+
+    phone_number = serializers.CharField(required=True, max_length=50)
+
+    def validate_phone_number(self, value):
+        """Validate phone number format (E.164)."""
+        # E.164 format: +[country code][number]
+        # Example: +12345678900
+        pattern = r"^\+[1-9]\d{1,14}$"
+
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "Phone number must be in E.164 format (e.g., +12345678900)"
+            )
+
+        return value
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    """Serializer for OTP verification."""
+
+    phone_number = serializers.CharField(required=True, max_length=50)
+    otp = serializers.CharField(required=True, min_length=6, max_length=6)
+
+    def validate_phone_number(self, value):
+        """Validate phone number format (E.164)."""
+        pattern = r"^\+[1-9]\d{1,14}$"
+
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "Phone number must be in E.164 format (e.g., +12345678900)"
+            )
+
+        return value
+
+    def validate_otp(self, value):
+        """Validate OTP is 6 digits."""
+        if not value.isdigit():
+            raise serializers.ValidationError("OTP must contain only digits")
+
+        return value
