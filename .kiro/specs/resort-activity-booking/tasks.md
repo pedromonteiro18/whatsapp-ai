@@ -163,22 +163,22 @@
     - Check request.user_phone matches booking.user_phone
     - _Requirements: 8.4_
 
-- [ ] 8. Implement NotificationService for WhatsApp
-  - [ ] 8.1 Create send_booking_created method
+- [x] 8. Implement NotificationService for WhatsApp
+  - [x] 8.1 Create send_booking_created method
     - Format message with booking details and web app link
     - Use existing Twilio integration to send WhatsApp message
     - Include booking ID, activity name, time, price
     - Include expiry warning (30 minutes)
     - _Requirements: 5.3, 9.1_
-  - [ ] 8.2 Create send_booking_confirmed method
+  - [x] 8.2 Create send_booking_confirmed method
     - Format confirmation message with activity details
     - Include location, time, duration, requirements
     - _Requirements: 7.3, 9.2_
-  - [ ] 8.3 Create send_booking_cancelled method
+  - [x] 8.3 Create send_booking_cancelled method
     - Format cancellation message
     - Include reason if provided
     - _Requirements: 7.4, 9.3_
-  - [ ] 8.4 Integrate notifications with BookingService
+  - [x] 8.4 Integrate notifications with BookingService
     - Call NotificationService methods from BookingService
     - Handle notification failures gracefully (log but don't block)
     - _Requirements: 9.1, 9.2, 9.3, 12.2_
