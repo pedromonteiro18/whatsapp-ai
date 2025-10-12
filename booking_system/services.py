@@ -3,6 +3,7 @@
 # pylint: disable=no-member
 # Django models have 'objects' and 'DoesNotExist' added dynamically
 
+import logging
 from datetime import timedelta
 from decimal import Decimal
 from typing import Optional, Tuple
@@ -12,6 +13,9 @@ from django.db.models import QuerySet
 from django.utils import timezone
 
 from .models import Activity, Booking, TimeSlot
+from .notifications import NotificationService
+
+logger = logging.getLogger(__name__)
 
 
 class BookingService:
@@ -148,6 +152,16 @@ class BookingService:
         time_slot.booked_count += participants
         time_slot.save(update_fields=["booked_count"])
 
+        # Send notification (non-blocking - log failures but don't raise)
+        try:
+            NotificationService.send_booking_created(booking)
+        except Exception as e:  # noqa: BLE001
+            logger.error(
+                "Failed to send booking created notification for booking %s: %s",
+                booking.id,
+                str(e)
+            )
+
         return booking
 
     @staticmethod
@@ -190,6 +204,16 @@ class BookingService:
         booking.status = "confirmed"
         booking.confirmed_at = timezone.now()
         booking.save(update_fields=["status", "confirmed_at"])
+
+        # Send notification (non-blocking - log failures but don't raise)
+        try:
+            NotificationService.send_booking_confirmed(booking)
+        except Exception as e:  # noqa: BLE001
+            logger.error(
+                "Failed to send booking confirmed notification for booking %s: %s",
+                booking.id,
+                str(e)
+            )
 
         return booking
 
@@ -251,6 +275,16 @@ class BookingService:
         # Decrement booked count
         time_slot.booked_count -= booking.participants
         time_slot.save(update_fields=["booked_count"])
+
+        # Send notification (non-blocking - log failures but don't raise)
+        try:
+            NotificationService.send_booking_cancelled(booking, reason)
+        except Exception as e:  # noqa: BLE001
+            logger.error(
+                "Failed to send booking cancelled notification for booking %s: %s",
+                booking.id,
+                str(e)
+            )
 
         return booking
 
