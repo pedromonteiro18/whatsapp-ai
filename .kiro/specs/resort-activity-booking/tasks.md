@@ -59,106 +59,106 @@
     - Create admin actions for confirm_booking and cancel_booking
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 4. Implement BookingService business logic
-  - [ ] 4.1 Create check_availability method
+- [x] 4. Implement BookingService business logic
+  - [x] 4.1 Create check_availability method
     - Implement method to query TimeSlot and check capacity vs booked_count
     - Return boolean and available capacity
     - Handle edge cases (past dates, inactive activities)
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 5.4_
-  - [ ] 4.2 Create create_booking method with transaction
+  - [x] 4.2 Create create_booking method with transaction
     - Implement atomic transaction for booking creation
     - Validate availability before creating
     - Increment TimeSlot.booked_count
     - Set expires_at to 30 minutes from now for pending bookings
     - Calculate total_price from activity price and participants
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 10.1, 10.2, 10.4_
-  - [ ] 4.3 Create confirm_booking method
+  - [x] 4.3 Create confirm_booking method
     - Update booking status to 'confirmed'
     - Set confirmed_at timestamp
     - Validate booking belongs to user_phone
     - Validate booking is in 'pending' status
     - _Requirements: 7.3, 8.4, 10.1, 10.2_
-  - [ ] 4.4 Create cancel_booking method
+  - [x] 4.4 Create cancel_booking method
     - Update booking status to 'cancelled'
     - Set cancelled_at timestamp
     - Decrement TimeSlot.booked_count in transaction
     - Validate cancellation deadline (24 hours before activity)
     - _Requirements: 7.4, 7.5, 7.6, 10.1, 10.2_
-  - [ ] 4.5 Create get_user_bookings method
+  - [x] 4.5 Create get_user_bookings method
     - Query bookings filtered by user_phone
     - Support optional status filtering
     - Order by created_at descending
     - Use select_related for activity and time_slot
     - _Requirements: 7.1, 8.4_
 
-- [ ] 5. Implement DRF serializers
-  - [ ] 5.1 Create ActivitySerializer with nested images
+- [x] 5. Implement DRF serializers
+  - [x] 5.1 Create ActivitySerializer with nested images
     - Serialize all Activity fields
     - Nest ActivityImage serializer for images list
     - Add computed field for primary_image
     - _Requirements: 1.1, 1.2, 1.3_
-  - [ ] 5.2 Create TimeSlotSerializer
+  - [x] 5.2 Create TimeSlotSerializer
     - Serialize TimeSlot fields
     - Add computed field for available_capacity
     - Format datetime fields appropriately
     - _Requirements: 4.1, 4.5_
-  - [ ] 5.3 Create BookingSerializer with validation
+  - [x] 5.3 Create BookingSerializer with validation
     - Serialize all Booking fields
     - Nest Activity and TimeSlot serializers (read-only)
     - Add validation for participants <= time_slot capacity
     - Add validation for future time slots only
     - _Requirements: 5.1, 5.2, 5.3, 7.1, 7.2, 12.1_
-  - [ ] 5.4 Create BookingCreateSerializer
+  - [x] 5.4 Create BookingCreateSerializer
     - Accept activity_id, time_slot_id, participants, special_requests
     - Validate time slot availability in validate() method
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 12.1, 12.4_
 
-- [ ] 6. Implement API viewsets and endpoints
-  - [ ] 6.1 Create ActivityViewSet with filtering
+- [x] 6. Implement API viewsets and endpoints
+  - [x] 6.1 Create ActivityViewSet with filtering
     - Implement list, retrieve actions
     - Add DjangoFilterBackend for category, price range filtering
     - Add SearchFilter for name and description
     - Add OrderingFilter for price, created_at
     - Implement custom availability action
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 4.1_
-  - [ ] 6.2 Create BookingViewSet with custom actions
+  - [x] 6.2 Create BookingViewSet with custom actions
     - Implement list (filtered by user_phone), retrieve, create actions
     - Add custom confirm action (POST /bookings/{id}/confirm/)
     - Add custom cancel action (POST /bookings/{id}/cancel/)
     - Use BookingService methods for business logic
     - Add permission checks for user_phone matching
     - _Requirements: 5.1, 5.2, 5.3, 7.1, 7.2, 7.3, 7.4, 8.4_
-  - [ ] 6.3 Create URL routing
+  - [x] 6.3 Create URL routing
     - Register ActivityViewSet and BookingViewSet with router
     - Configure URL patterns in booking_system/urls.py
     - Include booking_system URLs in main urls.py
     - _Requirements: All API requirements_
 
-- [ ] 7. Implement authentication system
-  - [ ] 7.1 Create OTP generation and storage in Redis
+- [x] 7. Implement authentication system
+  - [x] 7.1 Create OTP generation and storage in Redis
     - Implement generate_otp() function (6-digit random number)
     - Store OTP in Redis with phone number as key, 5-minute expiry
     - _Requirements: 8.1, 8.2_
-  - [ ] 7.2 Create request-otp API endpoint
+  - [x] 7.2 Create request-otp API endpoint
     - Accept phone number in request
     - Validate phone number format
     - Generate and store OTP
     - Send OTP via WhatsApp using existing Twilio integration
     - Implement rate limiting (max 3 requests per 10 minutes per phone)
     - _Requirements: 8.1, 8.2, 12.1_
-  - [ ] 7.3 Create verify-otp API endpoint
+  - [x] 7.3 Create verify-otp API endpoint
     - Accept phone number and OTP code
     - Verify OTP from Redis
     - Create session token and store in Redis
     - Return session token to client
     - Delete OTP from Redis after verification
     - _Requirements: 8.2, 8.3, 8.4_
-  - [ ] 7.4 Create custom authentication class
+  - [x] 7.4 Create custom authentication class
     - Implement DRF authentication class to validate session tokens
     - Check token in Redis and extract phone number
     - Set request.user_phone for authenticated requests
     - _Requirements: 8.3, 8.4, 8.5_
-  - [ ] 7.5 Create permission class for booking access
+  - [x] 7.5 Create permission class for booking access
     - Implement IsOwnerOrReadOnly permission
     - Check request.user_phone matches booking.user_phone
     - _Requirements: 8.4_
