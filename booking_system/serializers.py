@@ -255,3 +255,18 @@ class VerifyOTPSerializer(serializers.Serializer):
             raise serializers.ValidationError("OTP must contain only digits")
 
         return value
+
+
+class RecommendationSerializer(serializers.Serializer):
+    """Serializer for AI-powered activity recommendations."""
+
+    activity = ActivitySerializer(read_only=True)
+    reasoning = serializers.CharField(
+        read_only=True, help_text="AI-generated explanation for this recommendation"
+    )
+    score = serializers.IntegerField(
+        read_only=True,
+        min_value=0,
+        max_value=100,
+        help_text="Confidence score (0-100) for this recommendation",
+    )

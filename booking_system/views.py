@@ -1,5 +1,7 @@
 """API viewsets for booking system."""
 
+import logging
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -12,9 +14,12 @@ from .serializers import (
     ActivitySerializer,
     BookingCreateSerializer,
     BookingSerializer,
+    RecommendationSerializer,
     TimeSlotSerializer,
 )
-from .services import BookingService
+from .services import BookingService, RecommendationService
+
+logger = logging.getLogger(__name__)
 
 
 class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
@@ -124,7 +129,9 @@ class BookingViewSet(viewsets.ModelViewSet):
         """Create a new booking for authenticated user."""
         # Add user_phone to request for serializer context
         if hasattr(request, "auth") and request.auth:
-            request.user_phone = request.auth  # pyright: ignore[reportAttributeAccessIssue]
+            request.user_phone = (
+                request.auth
+            )  # pyright: ignore[reportAttributeAccessIssue]
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -191,3 +198,77 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RecommendationViewSet(viewsets.ViewSet):
+    """
+    ViewSet for AI-powered activity recommendations.
+
+    Provides personalized activity suggestions based on user preferences
+    and booking history.
+    """
+
+    authentication_classes = [SessionTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        """
+        Get personalized activity recommendations for authenticated user.
+
+        Query Parameters:
+        - count (int, optional): Number of recommendations (default: 3, max: 10)
+        - category (str, optional): Filter by specific category
+
+        Returns:
+            List of recommended activities with AI-generated reasoning
+        """
+        # Get authenticated user's phone
+        user_phone = getattr(request, "user_phone", None)
+        if not user_phone:
+            return Response(
+                {"error": "Authentication required"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Get query parameters
+        try:
+            count = int(request.query_params.get("count", 3))
+            if count < 1 or count > 10:
+                return Response(
+                    {"error": "Count must be between 1 and 10"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except ValueError:
+            return Response(
+                {"error": "Invalid count parameter"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        category_filter = request.query_params.get("category", None)
+
+        # Validate category if provided
+        valid_categories = ["watersports", "spa", "dining", "adventure", "wellness"]
+        if category_filter and category_filter not in valid_categories:
+            return Response(
+                {
+                    "error": f"Invalid category. Must be one of: {', '.join(valid_categories)}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # Get recommendations from service
+            recommendation_service = RecommendationService()
+            recommendations = recommendation_service.get_recommendations(
+                user_phone, count=count, category_filter=category_filter
+            )
+
+            # Serialize and return
+            serializer = RecommendationSerializer(recommendations, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            logger.error(f"Error generating recommendations for {user_phone}: {e}")
+            return Response(
+                {"error": "Failed to generate recommendations"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
