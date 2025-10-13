@@ -90,10 +90,15 @@ whatsapp-ai-chatbot/
 
 ### Required Software
 
+#### Backend
 - **Python 3.12+**: Application runtime
 - **PostgreSQL 16+**: Primary database for persistent storage
 - **Redis 7+**: Cache and message broker for Celery
 - **Docker & Docker Compose** (optional): For containerized deployment
+
+#### Frontend
+- **Node.js 18+**: JavaScript runtime for React app
+- **npm 8+**: Package manager (comes with Node.js)
 
 ### Required Accounts
 
@@ -109,7 +114,7 @@ whatsapp-ai-chatbot/
 
 ### Option 1: Docker (Recommended)
 
-The fastest way to get started:
+The fastest way to get started with the backend:
 
 ```bash
 # 1. Clone the repository
@@ -129,14 +134,36 @@ docker-compose exec web python manage.py migrate
 # 5. Create admin user
 docker-compose exec web python manage.py createsuperuser
 
-# 6. Access the application
+# 6. Access the backend
 # - API: http://localhost:8000
 # - Admin: http://localhost:8000/admin
+```
+
+#### Start the Frontend
+
+```bash
+# 7. In a new terminal, navigate to frontend directory
+cd frontend
+
+# 8. Install dependencies
+npm install
+
+# 9. Copy environment file
+cp .env.example .env
+# Edit if needed (default points to http://localhost:8000)
+
+# 10. Start development server
+npm run dev
+
+# 11. Access the web app
+# - Frontend: http://localhost:5173
 ```
 
 ### Option 2: Local Development
 
 For development without Docker:
+
+#### Backend Setup
 
 ```bash
 # 1. Clone the repository
@@ -174,6 +201,24 @@ celery -A whatsapp_ai_chatbot worker --loglevel=info
 celery -A whatsapp_ai_chatbot beat --loglevel=info
 ```
 
+#### Frontend Setup
+
+```bash
+# 10. In a new terminal, navigate to frontend directory
+cd frontend
+
+# 11. Install Node.js dependencies
+npm install
+
+# 12. Copy environment file
+cp .env.example .env
+
+# 13. Start Vite dev server
+npm run dev
+
+# Frontend will be available at http://localhost:5173
+```
+
 ## Environment Variables
 
 ### Django Configuration
@@ -209,6 +254,7 @@ celery -A whatsapp_ai_chatbot beat --loglevel=info
 | `TWILIO_ACCOUNT_SID` | Yes | - | Twilio account SID from console |
 | `TWILIO_AUTH_TOKEN` | Yes | - | Twilio auth token from console |
 | `TWILIO_WHATSAPP_NUMBER` | Yes | - | WhatsApp-enabled number (format: `whatsapp:+14155238886`) |
+| `SKIP_WEBHOOK_SIGNATURE_VERIFICATION` | No | `False` | Skip Twilio signature verification (dev only, never in production) |
 
 ### AI Provider Configuration
 
@@ -225,11 +271,20 @@ celery -A whatsapp_ai_chatbot beat --loglevel=info
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `CONVERSATION_TTL` | No | `3600` | Conversation expiration time in seconds (1 hour) |
-| `MAX_CONTEXT_MESSAGES` | No | `10` | Maximum messages to include in conversation context |
-| `RATE_LIMIT_MESSAGES` | No | `10` | Maximum messages per user per time window |
-| `RATE_LIMIT_WINDOW` | No | `60` | Rate limit time window in seconds |
+| `MAX_CONVERSATION_HISTORY` | No | `10` | Maximum messages to include in conversation context |
+| `SESSION_TIMEOUT_MINUTES` | No | `30` | Conversation session timeout in minutes |
+| `RATE_LIMIT_MESSAGES_PER_MINUTE` | No | `10` | Legacy rate limit setting (messages per minute) |
+| `RATE_LIMIT_MAX_REQUESTS` | No | `10` | Maximum requests per rate limit window |
+| `RATE_LIMIT_WINDOW_SECONDS` | No | `60` | Rate limit window duration in seconds |
 | `LOG_LEVEL` | No | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+
+### Booking System Configuration
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BOOKING_WEB_APP_URL` | Yes | - | Public URL of the React frontend for booking confirmations |
+| `BOOKING_PENDING_TIMEOUT_MINUTES` | No | `30` | Time limit for pending booking confirmation |
+| `BOOKING_CANCELLATION_DEADLINE_HOURS` | No | `24` | Hours before activity when cancellation is allowed |
 
 ### Example .env File
 
@@ -240,7 +295,7 @@ DEBUG=False
 ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
 
 # Database
-DB_NAME=whatsapp_ai_db
+DB_NAME=whatsapp_chatbot
 DB_USER=postgres
 DB_PASSWORD=your-db-password
 DB_HOST=localhost
@@ -251,24 +306,39 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB=0
 
+# Celery
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
 # Twilio
 TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_AUTH_TOKEN=your-auth-token
 TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
+SKIP_WEBHOOK_SIGNATURE_VERIFICATION=False
 
-# AI Provider (OpenRouter example)
-AI_PROVIDER=openrouter
-AI_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# AI Provider (OpenRouter)
+OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AI_MODEL=openai/gpt-4
-AI_MAX_TOKENS=1000
+AI_MAX_TOKENS=500
 AI_TEMPERATURE=0.7
 
-# Application
-CONVERSATION_TTL=3600
-MAX_CONTEXT_MESSAGES=10
-RATE_LIMIT_MESSAGES=10
-RATE_LIMIT_WINDOW=60
-LOG_LEVEL=INFO
+# Legacy OpenAI (if not using OpenRouter)
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+OPENAI_MODEL=gpt-4
+
+# Application Settings
+MAX_CONVERSATION_HISTORY=10
+SESSION_TIMEOUT_MINUTES=30
+
+# Rate Limiting
+RATE_LIMIT_MESSAGES_PER_MINUTE=10
+RATE_LIMIT_MAX_REQUESTS=10
+RATE_LIMIT_WINDOW_SECONDS=60
+
+# Booking System
+BOOKING_WEB_APP_URL=http://localhost:5173
+BOOKING_PENDING_TIMEOUT_MINUTES=30
+BOOKING_CANCELLATION_DEADLINE_HOURS=24
 ```
 
 ## Services Overview
@@ -277,11 +347,46 @@ The application consists of multiple services that work together:
 
 | Service | Port | Description |
 |---------|------|-------------|
-| **Web** | 8000 | Django application serving API and admin interface |
+| **Web (Django)** | 8000 | Django application serving API and admin interface |
+| **Frontend (React)** | 5173 | React web app for activity browsing and booking management |
 | **PostgreSQL** | 5432 | Primary database for persistent storage |
 | **Redis** | 6379 | Cache and message broker for Celery |
 | **Celery Worker** | - | Background task processor for async message handling |
 | **Celery Beat** | - | Periodic task scheduler for cleanup jobs |
+
+## Authentication System
+
+The application includes a phone-based authentication system for the web frontend:
+
+### How It Works
+
+1. **OTP Request**: User enters their phone number on the login page
+2. **WhatsApp Delivery**: 6-digit OTP code is sent via WhatsApp using Twilio
+3. **Verification**: User enters the OTP code to verify their identity
+4. **Session Token**: Upon successful verification, a session token is issued and stored in Redis
+5. **Authenticated Requests**: Frontend includes the session token in API requests
+
+### Key Features
+
+- **Phone-based**: No passwords required, users authenticate with their phone number
+- **WhatsApp OTP**: Leverages existing Twilio/WhatsApp integration
+- **Rate Limited**: Maximum 3 OTP requests per 10 minutes per phone number
+- **Time-bound**: OTP expires after 5 minutes
+- **Secure Sessions**: Session tokens stored in Redis with configurable expiry
+- **Stateless API**: Session token validates each request without server-side session state
+
+### Endpoints
+
+- `POST /api/v1/auth/request-otp/`: Request OTP code for phone number
+- `POST /api/v1/auth/verify-otp/`: Verify OTP and receive session token
+- `POST /api/v1/auth/logout/`: Invalidate session token
+
+### Security Considerations
+
+- OTP codes are single-use and expire after verification
+- Rate limiting prevents brute force attacks
+- Session tokens are stored in Redis with TTL
+- All booking endpoints require valid authentication
 
 ## Booking System
 
@@ -513,9 +618,24 @@ docker-compose up -d --scale celery_worker=3
 - Test Redis connection: `redis-cli ping`
 
 **Issue**: Celery tasks not processing
+
 - Check Celery worker is running
 - Verify Redis connection (Celery broker)
 - Check Celery logs for errors
+
+**Issue**: Frontend cannot connect to backend API
+
+- Verify backend is running on <http://localhost:8000>
+- Check VITE_API_URL in frontend/.env matches backend URL
+- Check browser console for CORS errors
+- Ensure CORS_ALLOWED_ORIGINS in Django settings includes frontend URL
+
+**Issue**: Authentication not working
+
+- Verify Redis is running (OTP and session tokens stored in Redis)
+- Check Twilio credentials for OTP delivery
+- Verify BOOKING_WEB_APP_URL is set correctly
+- Check browser localStorage for session token
 
 ### Debug Mode
 
