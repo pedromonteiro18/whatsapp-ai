@@ -18,6 +18,28 @@ This guide provides step-by-step instructions for setting up the WhatsApp AI Cha
 
 ### 1. Install Required Software
 
+#### Node.js 18+ and npm 8+
+
+**macOS** (using Homebrew):
+```bash
+brew install node
+```
+
+**Ubuntu/Debian**:
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+**Windows**:
+Download from [nodejs.org](https://nodejs.org/)
+
+**Verify installation**:
+```bash
+node --version  # Should be v18.x or higher
+npm --version   # Should be v8.x or higher
+```
+
 #### Python 3.12+
 
 **macOS** (using Homebrew):
@@ -364,6 +386,27 @@ python manage.py test_whatsapp --check-config
 python manage.py manage_ai_config test
 ```
 
+### Step 11: Set Up Frontend
+
+```bash
+# In a new terminal, navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+
+# The default settings point to http://localhost:8000 for the backend
+# Edit .env if you need to change the API URL
+
+# Start development server
+npm run dev
+
+# Frontend will be available at http://localhost:5173
+```
+
 ---
 
 ## Docker Deployment
@@ -449,6 +492,26 @@ docker-compose logs -f
 - **API**: http://localhost:8000
 - **Admin**: http://localhost:8000/admin
 - **Health Check**: http://localhost:8000/health/
+
+### Step 9: Set Up Frontend
+
+The Docker setup only runs the backend services. You need to run the frontend separately:
+
+```bash
+# In a new terminal, navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+
+# Start development server
+npm run dev
+
+# Frontend will be available at http://localhost:5173
+```
 
 ### Docker Management Commands
 
@@ -633,6 +696,8 @@ python manage.py test_whatsapp --phone "+1234567890" --message "Hello, this is a
 
 ### 3. Test End-to-End Flow
 
+#### WhatsApp Chatbot Flow
+
 1. **Join WhatsApp Sandbox** (if not already done):
    - Send the join code to Twilio's WhatsApp number
    - Wait for confirmation
@@ -650,10 +715,36 @@ python manage.py test_whatsapp --phone "+1234567890" --message "Hello, this is a
    ```bash
    # Local development
    tail -f logs/whatsapp_chatbot.log
-   
+
    # Docker
    docker-compose logs -f web
    ```
+
+#### Web App Authentication Flow
+
+1. **Access the Frontend**:
+   - Navigate to http://localhost:5173
+
+2. **Test Phone Authentication**:
+   - Click "Login" or navigate to `/login`
+   - Enter your phone number (with country code, e.g., +1234567890)
+   - Click "Request OTP"
+   - You should receive a 6-digit code via WhatsApp
+
+3. **Verify OTP**:
+   - Enter the OTP code you received
+   - Click "Verify"
+   - You should be redirected to the activities page
+
+4. **Test Authenticated Access**:
+   - Browse activities at `/activities`
+   - View your bookings at `/bookings`
+   - Try logging out and logging back in
+
+5. **Check Session Persistence**:
+   - Refresh the page - you should remain logged in
+   - Open browser DevTools → Application → Local Storage
+   - Verify `session_token` and `user_phone` are stored
 
 ### 4. Test Admin Interface
 
@@ -790,6 +881,60 @@ netstat -ano | findstr :8000  # Windows
 
 # Kill process or change port in docker-compose.yml
 ```
+
+### Frontend Issues
+
+**Error**: `npm: command not found`
+
+**Solution**:
+```bash
+# Install Node.js (see Prerequisites Setup section)
+# Verify installation
+node --version
+npm --version
+```
+
+**Error**: Frontend cannot connect to backend
+
+**Solution**:
+1. Verify backend is running at http://localhost:8000
+2. Check `VITE_API_URL` in `frontend/.env`
+3. Open browser console for CORS errors
+4. Ensure Django `CORS_ALLOWED_ORIGINS` includes `http://localhost:5173`
+
+**Error**: "Network Error" when requesting OTP
+
+**Solution**:
+1. Check backend API is accessible
+2. Verify Twilio credentials in backend `.env`
+3. Check Django logs for errors: `tail -f logs/whatsapp_chatbot.log`
+4. Test Twilio directly: `python manage.py test_whatsapp --check-config`
+
+### Authentication Issues
+
+**Error**: Not receiving OTP via WhatsApp
+
+**Solution**:
+1. Verify you've joined the Twilio WhatsApp Sandbox
+2. Check Twilio console for delivery errors
+3. Verify `TWILIO_WHATSAPP_NUMBER` format in `.env` (should be `whatsapp:+14155238886`)
+4. Check backend logs for Twilio API errors
+
+**Error**: "Invalid OTP" when verifying
+
+**Solution**:
+1. Ensure OTP hasn't expired (5 minutes)
+2. Check Redis is running: `redis-cli ping`
+3. Verify OTP was typed correctly (6 digits)
+4. Request a new OTP if expired
+
+**Error**: Logged out after page refresh
+
+**Solution**:
+1. Check browser localStorage has `session_token`
+2. Verify session hasn't expired (check backend logs)
+3. Ensure Redis is running (sessions stored in Redis)
+4. Clear browser cache and try logging in again
 
 ---
 
