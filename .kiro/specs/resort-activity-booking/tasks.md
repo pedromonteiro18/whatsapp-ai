@@ -288,33 +288,33 @@
     - Create basic layout components (Header, Footer, Navigation) in src/components/layout/
     - _Requirements: All frontend requirements_
 
-- [ ] 13. Implement authentication UI
-  - [ ] 13.1 Create PhoneInput component in src/components/auth/
+- [x] 13. Implement authentication UI
+  - [x] 13.1 Create PhoneInput component in src/components/auth/
     - Build phone number input with validation
     - Use shadcn/ui Input component
     - Add format validation (E.164 format)
     - Display validation errors
     - _Requirements: 8.1, 8.2_
-  - [ ] 13.2 Create OTPForm component in src/components/auth/
+  - [x] 13.2 Create OTPForm component in src/components/auth/
     - Build OTP input using shadcn/ui InputOTP
     - Implement 6-digit code entry
     - Add resend OTP functionality with rate limiting
     - Show countdown timer (5 minutes)
     - _Requirements: 8.2, 8.3_
-  - [ ] 13.3 Create LoginPage in src/pages/
+  - [x] 13.3 Create LoginPage in src/pages/
     - Combine PhoneInput and OTPForm
     - Implement two-step flow (request OTP → verify OTP)
     - Handle API calls to /api/v1/auth/request-otp and /api/v1/auth/verify-otp
     - Store session token in localStorage
     - Redirect to /bookings on success
     - _Requirements: 8.1, 8.2, 8.3_
-  - [ ] 13.4 Create AuthContext and useAuth hook in src/contexts/
+  - [x] 13.4 Create AuthContext and useAuth hook in src/contexts/
     - Implement context for auth state (isAuthenticated, userPhone, token)
     - Create login, logout, checkAuth methods
     - Persist auth state in localStorage
     - Provide auth context to app via AuthProvider
     - _Requirements: 8.3, 8.4, 8.5_
-  - [ ] 13.5 Create ProtectedRoute component in src/components/
+  - [x] 13.5 Create ProtectedRoute component in src/components/
     - Wrap routes requiring authentication
     - Redirect to /login if not authenticated
     - Show loading state while checking auth
