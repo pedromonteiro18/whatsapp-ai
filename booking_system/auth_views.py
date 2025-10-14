@@ -2,6 +2,7 @@
 
 import logging
 
+from decouple import config
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -72,22 +73,36 @@ class RequestOTPView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # Send OTP via WhatsApp
-        try:
-            whatsapp_client = WhatsAppClient()
-            message = (
-                f"Your verification code is: {otp}\n\n"
-                f"This code will expire in 5 minutes.\n"
-                f"Do not share this code with anyone."
+        # Send OTP via WhatsApp (or skip in development mode)
+        skip_otp_sending = config("SKIP_OTP_SENDING", default=False, cast=bool)
+
+        if skip_otp_sending:
+            # Development mode: Log OTP instead of sending
+            logger.warning(
+                "⚠️  DEVELOPMENT MODE: Skipping WhatsApp OTP sending\n"
+                "📱 Phone: %s\n"
+                "🔑 OTP: %s\n"
+                "⏱️  Valid for 5 minutes",
+                phone_number,
+                otp,
             )
-            whatsapp_client.send_message(phone_number, message)
-            logger.info("OTP sent successfully to phone %s", phone_number)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error("Failed to send OTP via WhatsApp: %s", e)
-            return Response(
-                {"error": "Failed to send OTP. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        else:
+            # Production mode: Send via WhatsApp
+            try:
+                whatsapp_client = WhatsAppClient()
+                message = (
+                    f"Your verification code is: {otp}\n\n"
+                    f"This code will expire in 5 minutes.\n"
+                    f"Do not share this code with anyone."
+                )
+                whatsapp_client.send_message(phone_number, message)
+                logger.info("OTP sent successfully to phone %s", phone_number)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error("Failed to send OTP via WhatsApp: %s", e)
+                return Response(
+                    {"error": "Failed to send OTP. Please try again."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
         return Response(
             {
