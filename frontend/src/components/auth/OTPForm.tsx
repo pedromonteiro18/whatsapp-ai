@@ -24,6 +24,7 @@ export default function OTPForm({
   const [otp, setOtp] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(expirySeconds);
   const [canResend, setCanResend] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Countdown timer
   useEffect(() => {
@@ -47,15 +48,19 @@ export default function OTPForm({
 
   // Auto-submit when OTP is complete
   useEffect(() => {
-    if (otp.length === 6) {
+    if (otp.length === 6 && !isSubmitting && !isLoading) {
+      setIsSubmitting(true);
       onVerify(otp);
+      // Reset after a delay to allow for new attempts if verification fails
+      setTimeout(() => setIsSubmitting(false), 2000);
     }
-  }, [otp, onVerify]);
+  }, [otp, onVerify, isSubmitting, isLoading]);
 
   const handleResend = () => {
     setOtp('');
     setTimeRemaining(expirySeconds);
     setCanResend(false);
+    setIsSubmitting(false);
     onResend();
   };
 
