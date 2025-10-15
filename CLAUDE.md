@@ -6,6 +6,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 WhatsApp AI Chatbot built with Django 5.1, Celery, and Twilio. The system handles asynchronous WhatsApp message processing with AI-powered responses (OpenAI, Anthropic), conversation management, and comprehensive security features.
 
+## Project Structure
+
+This is a **monorepo** with clear separation of concerns:
+
+```
+whatsapp-ai/
+├── backend/                    # Django backend
+│   ├── chatbot_core/           # Core business logic
+│   ├── whatsapp/               # Twilio/WhatsApp integration
+│   ├── ai_integration/         # AI provider adapters
+│   ├── booking_system/         # Activity booking system
+│   ├── whatsapp_ai_chatbot/    # Django project settings
+│   ├── manage.py               # Django management script
+│   ├── requirements.txt        # Python dependencies
+│   └── mypy.ini                # Type checking config
+├── frontend/                   # React web app (Vite + TypeScript)
+│   ├── src/                    # React components, pages, services
+│   ├── package.json            # Node dependencies
+│   └── vite.config.ts          # Vite configuration
+├── infrastructure/             # Infrastructure configs
+│   ├── docker/                 # Docker files
+│   │   ├── Dockerfile.backend  # Backend container
+│   │   └── docker-entrypoint.sh# Container startup script
+│   └── docker-compose.yml      # Service orchestration
+├── docs/                       # Project documentation
+│   ├── SETUP.md                # Setup instructions
+│   ├── API_DOCUMENTATION.md    # API reference
+│   └── DEV_AUTH.md             # Authentication guide
+├── logs/                       # Application logs
+├── .kiro/specs/                # Feature specifications
+├── README.md                   # Main project readme
+├── CLAUDE.md                   # This file (AI assistant guide)
+└── .env.example                # Environment variable template
+```
+
+**Key Points:**
+- All Python imports use `backend.` prefix (e.g., `from backend.chatbot_core.models import Message`)
+- Commands run from project root: `python backend/manage.py runserver`
+- Docker Compose: `docker-compose -f infrastructure/docker-compose.yml up`
+- Frontend is independent with its own build process
+- Infrastructure configs are centralized in `infrastructure/`
+- Documentation centralized in `docs/` directory
+
 ## Architecture
 
 ### Request Flow
@@ -20,28 +63,28 @@ WhatsApp User → Twilio API → Django Webhook → Celery Task → AI API
 
 ### Key Components and Design Patterns
 
-1. **Webhook Receiver** (`whatsapp/views.py:WhatsAppWebhookView`)
+1. **Webhook Receiver** (`backend/whatsapp/views.py:WhatsAppWebhookView`)
    - Validates Twilio signature before processing
    - Queues messages to Celery for async processing
    - Returns 200 immediately to prevent Twilio timeout
 
-2. **Message Processor** (`chatbot_core/message_processor.py:MessageProcessor`)
+2. **Message Processor** (`backend/chatbot_core/message_processor.py:MessageProcessor`)
    - **Facade pattern**: Orchestrates conversation, AI, database, Redis, WhatsApp
    - Atomic database transactions with Django's `transaction.atomic()`
    - Two-level exception handling: known AI errors vs unexpected errors
    - Reference: `process_message()` method
 
-3. **Conversation Manager** (`chatbot_core/conversation_manager.py`)
+3. **Conversation Manager** (`backend/chatbot_core/conversation_manager.py`)
    - Redis-based conversation context with TTL expiration
    - Sliding window: maintains last N messages (configurable)
    - Uses Redis sorted sets for time-based retrieval
 
-4. **AI Adapters** (`ai_integration/adapters/`)
+4. **AI Adapters** (`backend/ai_integration/adapters/`)
    - **Strategy pattern**: Abstract `AIAdapter` base class
    - OpenRouter adapter supports multiple providers (OpenAI, Anthropic, Llama)
    - Factory pattern in `factory.py` for adapter instantiation
 
-5. **Error Handler** (`chatbot_core/error_handler.py`)
+5. **Error Handler** (`backend/chatbot_core/error_handler.py`)
    - **Error categorization**: WEBHOOK, AI, DATABASE, WHATSAPP, SYSTEM, CONFIGURATION
    - **Severity levels**: LOW, MEDIUM, HIGH, CRITICAL
    - Redis-based rate limiting for admin alerts (1 alert/hour per error type)
@@ -83,7 +126,7 @@ WhatsApp User → Twilio API → Django Webhook → Celery Task → AI API
 
 ### Configuration System
 
-**Config class** (`chatbot_core/config.py`):
+**Config class** (`backend/chatbot_core/config.py`):
 - Loads from environment via `python-decouple`
 - `validate()` returns `(bool, list[str])` tuple
 - `validate_required()` raises `ImproperlyConfigured` if validation fails
@@ -96,16 +139,16 @@ WhatsApp User → Twilio API → Django Webhook → Celery Task → AI API
 ### Setup and Database
 ```bash
 # Run migrations
-python manage.py migrate
+python backend/manage.py migrate
 
 # Create superuser
-python manage.py createsuperuser
+python backend/manage.py createsuperuser
 
 # Validate configuration (tests DB, Redis, Twilio, AI API connectivity)
-python manage.py validate_config
+python backend/manage.py validate_config
 
 # Skip external service tests (faster, config-only validation)
-python manage.py validate_config --skip-external
+python backend/manage.py validate_config --skip-external
 ```
 
 ### Running Services
@@ -113,25 +156,25 @@ python manage.py validate_config --skip-external
 **Option 1: Native Local Development** (fastest iteration)
 ```bash
 # Terminal 1: Django development server
-python manage.py runserver
+python backend/manage.py runserver
 
 # Terminal 2: Celery worker
-celery -A whatsapp_ai_chatbot worker --loglevel=info
+celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
 
 # Terminal 3: Celery beat scheduler (periodic tasks)
-celery -A whatsapp_ai_chatbot beat --loglevel=info
+celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
 ```
 
 **Option 2: Docker** (simplest setup)
 ```bash
 # Start all services (Django + PostgreSQL + Redis + Celery + Beat)
-docker-compose up --build
+docker-compose -f infrastructure/docker-compose.yml up --build
 
 # Run migrations in Docker
-docker-compose exec web python manage.py migrate
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py migrate
 
 # Create superuser in Docker
-docker-compose exec web python manage.py createsuperuser
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py createsuperuser
 
 # View logs
 docker-compose logs -f web
@@ -140,12 +183,12 @@ docker-compose logs -f web
 **Option 3: Hybrid** (recommended for active development)
 ```bash
 # Start infrastructure in Docker
-docker-compose up db redis
+docker-compose -f infrastructure/docker-compose.yml up db redis
 
 # Run Django/Celery natively (in separate terminals)
-python manage.py runserver
-celery -A whatsapp_ai_chatbot worker --loglevel=info
-celery -A whatsapp_ai_chatbot beat --loglevel=info
+python backend/manage.py runserver
+celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
+celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
 ```
 
 ### Management Commands
@@ -153,40 +196,40 @@ celery -A whatsapp_ai_chatbot beat --loglevel=info
 **Test WhatsApp Integration:**
 ```bash
 # Send test message
-python manage.py test_whatsapp --to "+1234567890" --message "Test"
+python backend/manage.py test_whatsapp --to "+1234567890" --message "Test"
 
 # Check configuration only (no message sent)
-python manage.py test_whatsapp --check-config
+python backend/manage.py test_whatsapp --check-config
 ```
 
 **Manage AI Configuration:**
 ```bash
 # List all AI configurations
-python manage.py manage_ai_config list
+python backend/manage.py manage_ai_config list
 
 # Create new configuration (interactive prompts)
-python manage.py manage_ai_config create \
+python backend/manage.py manage_ai_config create \
   --name "Production" \
   --provider openrouter \
   --api-key sk-or-v1-xxx \
   --model openai/gpt-4
 
 # Test AI connectivity
-python manage.py manage_ai_config test
+python backend/manage.py manage_ai_config test
 
 # Activate specific configuration
-python manage.py manage_ai_config update --activate
+python backend/manage.py manage_ai_config update --activate
 ```
 
 ### Testing and Quality
 
 ```bash
 # Run all tests
-python manage.py test
+python backend/manage.py test
 
 # Run specific app tests
-python manage.py test chatbot_core
-python manage.py test chatbot_core.tests.test_message_processor
+python backend/manage.py test chatbot_core
+python backend/manage.py test chatbot_core.tests.test_message_processor
 
 # Type checking (entire project)
 mypy .
@@ -208,28 +251,28 @@ flake8 .
 
 ```bash
 # Start services in background
-docker-compose up -d
+docker-compose -f infrastructure/docker-compose.yml up -d
 
 # Stop all services
-docker-compose down
+docker-compose -f infrastructure/docker-compose.yml down
 
 # Stop and remove volumes (deletes database data)
-docker-compose down -v
+docker-compose -f infrastructure/docker-compose.yml down -v
 
 # Restart specific service
 docker-compose restart web
 
 # Scale Celery workers (horizontal scaling)
-docker-compose up -d --scale celery_worker=3
+docker-compose -f infrastructure/docker-compose.yml up -d --scale celery_worker=3
 
 # Execute Django commands in container
-docker-compose exec web python manage.py <command>
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py <command>
 
 # Access Django shell in container
-docker-compose exec web python manage.py shell
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py shell
 
 # Access PostgreSQL in container
-docker-compose exec db psql -U postgres -d whatsapp_chatbot
+docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d whatsapp_chatbot
 ```
 
 ## Code Style Configuration
@@ -304,10 +347,10 @@ docker-compose exec db psql -U postgres -d whatsapp_chatbot
 ## Architecture Patterns Reference
 
 **When adding new features:**
-1. **New AI provider**: Create adapter in `ai_integration/adapters/`, extend factory
+1. **New AI provider**: Create adapter in `backend/ai_integration/adapters/`, extend factory
 2. **New error category**: Add to `ErrorCategory` enum in `error_handler.py`
-3. **New management command**: Create in `chatbot_core/management/commands/`
-4. **New Celery task**: Add to `chatbot_core/tasks.py`, configure in `celery.py` if periodic
+3. **New management command**: Create in `backend/chatbot_core/management/commands/`
+4. **New Celery task**: Add to `backend/chatbot_core/tasks.py`, configure in `celery.py` if periodic
 5. **New security check**: Add to `Sanitizer` class or create middleware
 
 **Key architectural decisions:**

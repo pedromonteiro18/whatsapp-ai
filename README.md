@@ -126,13 +126,13 @@ cp .env.example .env
 # Edit .env with your credentials (see Environment Variables section)
 
 # 3. Start all services
-docker-compose up --build
+docker-compose -f infrastructure/docker-compose.yml up --build
 
 # 4. In a new terminal, run migrations
-docker-compose exec web python manage.py migrate
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py migrate
 
 # 5. Create admin user
-docker-compose exec web python manage.py createsuperuser
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py createsuperuser
 
 # 6. Access the backend
 # - API: http://localhost:8000
@@ -185,20 +185,20 @@ cp .env.example .env
 # Edit .env with your configuration
 
 # 6. Run migrations
-python manage.py migrate
+python backend/manage.py migrate
 
 # 7. Create superuser
-python manage.py createsuperuser
+python backend/manage.py createsuperuser
 
 # 8. Start Django development server
-python manage.py runserver
+python backend/manage.py runserver
 
 # 9. In separate terminals, start Celery services
 # Terminal 2: Celery worker
-celery -A whatsapp_ai_chatbot worker --loglevel=info
+celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
 
 # Terminal 3: Celery beat (periodic tasks)
-celery -A whatsapp_ai_chatbot beat --loglevel=info
+celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
 ```
 
 #### Frontend Setup
@@ -445,33 +445,33 @@ The application includes several management commands for administration:
 
 ```bash
 # Test sending a message
-python manage.py test_whatsapp --phone "+1234567890" --message "Test message"
+python backend/manage.py test_whatsapp --phone "+1234567890" --message "Test message"
 
 # Check configuration only
-python manage.py test_whatsapp --check-config
+python backend/manage.py test_whatsapp --check-config
 ```
 
 ### Manage AI Configuration
 
 ```bash
 # List all AI configurations
-python manage.py manage_ai_config list
+python backend/manage.py manage_ai_config list
 
 # Create new configuration
-python manage.py manage_ai_config create
+python backend/manage.py manage_ai_config create
 
 # Update existing configuration
-python manage.py manage_ai_config update <config_id>
+python backend/manage.py manage_ai_config update <config_id>
 
 # Test AI connectivity
-python manage.py manage_ai_config test
+python backend/manage.py manage_ai_config test
 ```
 
 ### Validate Configuration
 
 ```bash
 # Validate all environment variables and settings
-python manage.py validate_config
+python backend/manage.py validate_config
 ```
 
 ## Development
@@ -480,11 +480,11 @@ python manage.py validate_config
 
 ```bash
 # Run all tests
-python manage.py test
+python backend/manage.py test
 
 # Run specific app tests
-python manage.py test chatbot_core
-python manage.py test whatsapp
+python backend/manage.py test chatbot_core
+python backend/manage.py test whatsapp
 
 # Run with coverage
 coverage run --source='.' manage.py test
@@ -574,7 +574,7 @@ Before deploying to production:
 docker-compose -f docker-compose.yml build
 
 # Start services in detached mode
-docker-compose up -d
+docker-compose -f infrastructure/docker-compose.yml up -d
 
 # Check service status
 docker-compose ps
@@ -589,7 +589,7 @@ To scale Celery workers:
 
 ```bash
 # Scale to 3 worker instances
-docker-compose up -d --scale celery_worker=3
+docker-compose -f infrastructure/docker-compose.yml up -d --scale celery_worker=3
 ```
 
 ## Troubleshooting
