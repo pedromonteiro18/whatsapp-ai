@@ -41,7 +41,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
         />
         {/* Category Badge */}
         <div className="absolute top-2 right-2">
-          <Badge variant="secondary" className="bg-white/90 backdrop-blur">
+          <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm">
             {categoryLabel}
           </Badge>
         </div>

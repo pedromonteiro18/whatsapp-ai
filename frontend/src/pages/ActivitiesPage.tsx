@@ -45,7 +45,7 @@ export default function ActivitiesPage() {
       {/* Main Content */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Filter Sidebar */}
-        <aside className="lg:w-64 flex-shrink-0">
+        <aside className="lg:w-64 shrink-0">
           <ActivityFilter filters={filters} onChange={setFilters} />
         </aside>
 
