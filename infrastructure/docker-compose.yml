@@ -26,14 +26,17 @@ services:
       retries: 5
 
   web:
-    build: .
-    command: gunicorn whatsapp_ai_chatbot.wsgi:application --bind 0.0.0.0:8000
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    command: gunicorn backend.whatsapp_ai_chatbot.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - .:/app
+      - ../backend:/app/backend
+      - ../logs:/app/logs
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - ../.env
     depends_on:
       db:
         condition: service_healthy
@@ -41,23 +44,29 @@ services:
         condition: service_healthy
 
   celery:
-    build: .
-    command: celery -A whatsapp_ai_chatbot worker --loglevel=info
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    command: celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
     volumes:
-      - .:/app
+      - ../backend:/app/backend
+      - ../logs:/app/logs
     env_file:
-      - .env
+      - ../.env
     depends_on:
       - db
       - redis
 
   celery-beat:
-    build: .
-    command: celery -A whatsapp_ai_chatbot beat --loglevel=info
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    command: celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
     volumes:
-      - .:/app
+      - ../backend:/app/backend
+      - ../logs:/app/logs
     env_file:
-      - .env
+      - ../.env
     depends_on:
       - db
       - redis

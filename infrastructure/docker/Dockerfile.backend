@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --upgrade pip && \
     pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
@@ -27,7 +27,8 @@ FROM python:3.12-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DJANGO_SETTINGS_MODULE=whatsapp_ai_chatbot.settings
+    DJANGO_SETTINGS_MODULE=backend.whatsapp_ai_chatbot.settings \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
@@ -50,8 +51,12 @@ RUN groupadd -r django && \
     mkdir -p /app/logs /app/static /app/media && \
     chown -R django:django /app
 
-# Copy project files
-COPY --chown=django:django . /app/
+# Copy backend files
+COPY --chown=django:django backend /app/backend/
+# Copy infrastructure files (entrypoint script)
+COPY --chown=django:django infrastructure/docker/docker-entrypoint.sh /app/
+# Create logs directory
+RUN mkdir -p /app/logs && chown -R django:django /app/logs
 
 # Create gunicorn configuration
 RUN echo 'import multiprocessing\n\
@@ -94,7 +99,6 @@ graceful_timeout = 30\n\
 ' > /app/gunicorn.conf.py
 
 # Make entrypoint executable
-COPY --chown=django:django docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Switch to non-root user
@@ -111,4 +115,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Default command
-CMD ["gunicorn", "whatsapp_ai_chatbot.wsgi:application", "--config", "/app/gunicorn.conf.py"]
+CMD ["gunicorn", "backend.whatsapp_ai_chatbot.wsgi:application", "--config", "/app/gunicorn.conf.py"]

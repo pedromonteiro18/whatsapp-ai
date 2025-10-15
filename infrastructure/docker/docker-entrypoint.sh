@@ -123,8 +123,8 @@ trap cleanup SIGTERM SIGINT
 
 # Main startup sequence
 main() {
-    # Ensure we're in the app directory
-    cd /app
+    # Ensure we're in the backend directory for manage.py commands
+    cd /app/backend
 
     # Run startup tasks
     wait_for_db
