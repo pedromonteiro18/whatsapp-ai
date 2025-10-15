@@ -333,20 +333,20 @@ Fill in all required variables (see Environment Variables section in README.md).
 ### Step 6: Run Migrations
 
 ```bash
-python manage.py migrate
+python backend/manage.py migrate
 ```
 
 ### Step 7: Create Superuser
 
 ```bash
-python manage.py createsuperuser
+python backend/manage.py createsuperuser
 # Follow prompts to create admin account
 ```
 
 ### Step 8: Validate Configuration
 
 ```bash
-python manage.py validate_config
+python backend/manage.py validate_config
 ```
 
 This will check all environment variables and connections.
@@ -358,19 +358,19 @@ Open three terminal windows:
 **Terminal 1 - Django Server**:
 ```bash
 source venv/bin/activate
-python manage.py runserver
+python backend/manage.py runserver
 ```
 
 **Terminal 2 - Celery Worker**:
 ```bash
 source venv/bin/activate
-celery -A whatsapp_ai_chatbot worker --loglevel=info
+celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
 ```
 
 **Terminal 3 - Celery Beat**:
 ```bash
 source venv/bin/activate
-celery -A whatsapp_ai_chatbot beat --loglevel=info
+celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
 ```
 
 ### Step 10: Test the Setup
@@ -380,10 +380,10 @@ celery -A whatsapp_ai_chatbot beat --loglevel=info
 source venv/bin/activate
 
 # Test WhatsApp configuration
-python manage.py test_whatsapp --check-config
+python backend/manage.py test_whatsapp --check-config
 
 # Test AI configuration
-python manage.py manage_ai_config test
+python backend/manage.py manage_ai_config test
 ```
 
 ### Step 11: Set Up Frontend
@@ -447,10 +447,10 @@ DB_PASSWORD=your_secure_password
 
 ```bash
 # Build images and start all services
-docker-compose up --build
+docker-compose -f infrastructure/docker-compose.yml up --build
 
 # Or run in detached mode (background)
-docker-compose up -d --build
+docker-compose -f infrastructure/docker-compose.yml up -d --build
 ```
 
 This will start:
@@ -464,13 +464,13 @@ This will start:
 
 ```bash
 # In a new terminal
-docker-compose exec web python manage.py migrate
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py migrate
 ```
 
 ### Step 6: Create Superuser
 
 ```bash
-docker-compose exec web python manage.py createsuperuser
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py createsuperuser
 ```
 
 ### Step 7: Verify Services
@@ -517,10 +517,10 @@ npm run dev
 
 ```bash
 # Stop all services
-docker-compose down
+docker-compose -f infrastructure/docker-compose.yml down
 
 # Stop and remove volumes (deletes data)
-docker-compose down -v
+docker-compose -f infrastructure/docker-compose.yml down -v
 
 # Restart a specific service
 docker-compose restart web
@@ -529,10 +529,10 @@ docker-compose restart web
 docker-compose logs -f web
 
 # Execute commands in container
-docker-compose exec web python manage.py <command>
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py <command>
 
 # Scale Celery workers
-docker-compose up -d --scale celery_worker=3
+docker-compose -f infrastructure/docker-compose.yml up -d --scale celery_worker=3
 ```
 
 ---
@@ -569,7 +569,7 @@ Forwarding HTTP traffic from https://abc123xyz.serveo.net
 3. **Restart Django server** for changes to take effect:
    ```bash
    # Press Ctrl+C in Django terminal, then:
-   python manage.py runserver
+   python backend/manage.py runserver
    ```
 
 #### Step 3: Configure Twilio Webhook
@@ -660,7 +660,7 @@ cp .env.example .env
 nano .env
 
 # Start with Docker
-docker-compose up -d --build
+docker-compose -f infrastructure/docker-compose.yml up -d --build
 
 # Configure nginx as reverse proxy (recommended)
 # Install certbot for SSL certificate
@@ -678,20 +678,20 @@ Set webhook URL to: `https://yourdomain.com/api/whatsapp/webhook/`
 
 ```bash
 # Validate all settings
-python manage.py validate_config
+python backend/manage.py validate_config
 
 # Test WhatsApp configuration
-python manage.py test_whatsapp --check-config
+python backend/manage.py test_whatsapp --check-config
 
 # Test AI configuration
-python manage.py manage_ai_config test
+python backend/manage.py manage_ai_config test
 ```
 
 ### 2. Test WhatsApp Integration
 
 ```bash
 # Send a test message
-python manage.py test_whatsapp --phone "+1234567890" --message "Hello, this is a test!"
+python backend/manage.py test_whatsapp --phone "+1234567890" --message "Hello, this is a test!"
 ```
 
 ### 3. Test End-to-End Flow
@@ -840,7 +840,7 @@ brew services start redis  # macOS
 2. Check API key has sufficient credits
 3. Test with management command:
    ```bash
-   python manage.py manage_ai_config test
+   python backend/manage.py manage_ai_config test
    ```
 
 ### Celery Not Processing Tasks
@@ -853,7 +853,7 @@ brew services start redis  # macOS
 ps aux | grep celery
 
 # Check Celery logs
-celery -A whatsapp_ai_chatbot worker --loglevel=debug
+celery -A backend.whatsapp_ai_chatbot worker --loglevel=debug
 
 # Verify Redis connection (Celery broker)
 redis-cli ping
@@ -908,7 +908,7 @@ npm --version
 1. Check backend API is accessible
 2. Verify Twilio credentials in backend `.env`
 3. Check Django logs for errors: `tail -f logs/whatsapp_chatbot.log`
-4. Test Twilio directly: `python manage.py test_whatsapp --check-config`
+4. Test Twilio directly: `python backend/manage.py test_whatsapp --check-config`
 
 ### Authentication Issues
 

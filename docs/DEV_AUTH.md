@@ -15,7 +15,7 @@ To avoid Twilio costs and rate limits during local development, you can bypass t
 2. **Restart Django Server**:
    ```bash
    # Stop current server (Ctrl+C)
-   ./venv/bin/python manage.py runserver
+   ./venv/bin/python backend/manage.py runserver
    ```
 
 ### How It Works
@@ -38,7 +38,7 @@ When `SKIP_OTP_SENDING=True`:
 
 ```bash
 # Terminal 1: Start Django server
-./venv/bin/python manage.py runserver
+./venv/bin/python backend/manage.py runserver
 
 # Output when user requests OTP:
 # [WARNING] ⚠️  DEVELOPMENT MODE: Skipping WhatsApp OTP sending
@@ -89,12 +89,12 @@ When you need to test the actual Twilio integration:
 
 ```bash
 # Temporarily disable skip flag
-SKIP_OTP_SENDING=False ./venv/bin/python manage.py runserver
+SKIP_OTP_SENDING=False ./venv/bin/python backend/manage.py runserver
 ```
 
 Or use the management command:
 ```bash
-./venv/bin/python manage.py test_whatsapp --to "+1234567890" --message "Test"
+./venv/bin/python backend/manage.py test_whatsapp --to "+1234567890" --message "Test"
 ```
 
 ### Troubleshooting

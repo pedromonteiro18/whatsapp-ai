@@ -353,10 +353,10 @@ Test WhatsApp integration and send test messages.
 
 ```bash
 # Check configuration only
-python manage.py test_whatsapp --check-config
+python backend/manage.py test_whatsapp --check-config
 
 # Send test message
-python manage.py test_whatsapp --phone "+1234567890" --message "Test message"
+python backend/manage.py test_whatsapp --phone "+1234567890" --message "Test message"
 ```
 
 **Options**:
@@ -383,29 +383,29 @@ Manage AI provider configurations.
 
 ```bash
 # List all configurations
-python manage.py manage_ai_config list
+python backend/manage.py manage_ai_config list
 
 # Create new configuration (interactive)
-python manage.py manage_ai_config create
+python backend/manage.py manage_ai_config create
 
 # Update configuration
-python manage.py manage_ai_config update <config_id>
+python backend/manage.py manage_ai_config update <config_id>
 
 # Test AI connectivity
-python manage.py manage_ai_config test
+python backend/manage.py manage_ai_config test
 ```
 
 **Examples**:
 
 ```bash
 # List configurations
-$ python manage.py manage_ai_config list
+$ python backend/manage.py manage_ai_config list
 ID  Provider    Model              Active  Created
 1   openrouter  openai/gpt-4       Yes     2024-01-15
 2   openai      gpt-3.5-turbo      No      2024-01-10
 
 # Test configuration
-$ python manage.py manage_ai_config test
+$ python backend/manage.py manage_ai_config test
 Testing AI configuration...
 ✓ API key is valid
 ✓ Model is accessible
@@ -422,7 +422,7 @@ Validate all environment variables and system configuration.
 **Usage**:
 
 ```bash
-python manage.py validate_config
+python backend/manage.py validate_config
 ```
 
 **Output**:
@@ -508,7 +508,7 @@ curl -X POST http://localhost:8000/api/whatsapp/webhook/ \
    ALLOWED_HOSTS=localhost,127.0.0.1,your-tunnel-domain.ngrok.io
 
    # Restart Django server for changes to take effect
-   python manage.py runserver  # or docker-compose restart web
+   python backend/manage.py runserver  # or docker-compose restart web
    ```
 
 3. **Verify signature validation**:
@@ -537,7 +537,7 @@ curl -X POST http://localhost:8000/api/whatsapp/webhook/ \
 
 ```bash
 # Check AI configuration
-python manage.py manage_ai_config test
+python backend/manage.py manage_ai_config test
 
 # Check Celery worker logs
 docker-compose logs celery_worker | grep -i error
@@ -554,7 +554,7 @@ tail -f logs/errors.log
    cat .env | grep AI_API_KEY
    
    # Test with management command
-   python manage.py manage_ai_config test
+   python backend/manage.py manage_ai_config test
    ```
 
 2. **Insufficient Credits**:
@@ -608,7 +608,7 @@ docker-compose logs db
    sudo systemctl start postgresql
    
    # Start database (Docker)
-   docker-compose up -d db
+   docker-compose -f infrastructure/docker-compose.yml up -d db
    ```
 
 2. **Wrong credentials**:
@@ -630,10 +630,10 @@ docker-compose logs db
 4. **Migrations not applied**:
    ```bash
    # Run migrations
-   python manage.py migrate
+   python backend/manage.py migrate
    
    # Or with Docker
-   docker-compose exec web python manage.py migrate
+   docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py migrate
    ```
 
 ---
@@ -666,7 +666,7 @@ docker-compose logs redis
    sudo systemctl start redis-server
    
    # Start Redis (Docker)
-   docker-compose up -d redis
+   docker-compose -f infrastructure/docker-compose.yml up -d redis
    ```
 
 2. **Wrong Redis configuration**:
@@ -700,7 +700,7 @@ docker-compose logs redis
 
 ```bash
 # Check Celery worker status
-celery -A whatsapp_ai_chatbot inspect active
+celery -A backend.whatsapp_ai_chatbot inspect active
 
 # Check Celery worker logs
 docker-compose logs celery_worker
@@ -714,10 +714,10 @@ redis-cli LLEN celery
 1. **Celery worker not running**:
    ```bash
    # Start worker (local)
-   celery -A whatsapp_ai_chatbot worker --loglevel=info
+   celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
    
    # Start worker (Docker)
-   docker-compose up -d celery_worker
+   docker-compose -f infrastructure/docker-compose.yml up -d celery_worker
    ```
 
 2. **Worker crashed**:
@@ -735,7 +735,7 @@ redis-cli LLEN celery
    docker-compose logs celery_worker | grep -i error
    
    # Purge failed tasks
-   celery -A whatsapp_ai_chatbot purge
+   celery -A backend.whatsapp_ai_chatbot purge
    ```
 
 ---
@@ -883,16 +883,16 @@ SELECT * FROM chatbot_core_webhooklog ORDER BY timestamp DESC LIMIT 10;
 
 ```bash
 # Test WhatsApp
-python manage.py test_whatsapp --check-config
+python backend/manage.py test_whatsapp --check-config
 
 # Test AI
-python manage.py manage_ai_config test
+python backend/manage.py manage_ai_config test
 
 # Test configuration
-python manage.py validate_config
+python backend/manage.py validate_config
 
 # Test database
-python manage.py dbshell
+python backend/manage.py dbshell
 
 # Test Redis
 redis-cli ping
@@ -977,12 +977,12 @@ Be aware of rate limits from external services:
 
 1. **Horizontal scaling**: Add more web workers
    ```bash
-   docker-compose up -d --scale web=3
+   docker-compose -f infrastructure/docker-compose.yml up -d --scale web=3
    ```
 
 2. **Celery workers**: Scale based on message volume
    ```bash
-   docker-compose up -d --scale celery_worker=5
+   docker-compose -f infrastructure/docker-compose.yml up -d --scale celery_worker=5
    ```
 
 3. **Redis**: Use Redis Cluster for high availability

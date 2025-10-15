@@ -47,7 +47,7 @@ Forwarding HTTP traffic from https://abc123xyz.serveo.net
 4. **Restart Django** (CRITICAL!):
    - Find Django terminal
    - Press `Ctrl+C`
-   - Run: `./venv/bin/python manage.py runserver 0.0.0.0:8001`
+   - Run: `./venv/bin/python backend/manage.py runserver 0.0.0.0:8001`
 
 ---
 

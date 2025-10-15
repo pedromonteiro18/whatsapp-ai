@@ -15,7 +15,7 @@ You need **3 terminals** running simultaneously:
 ```bash
 cd /Users/pedmonte/projects/whatsapp-ai
 source venv/bin/activate
-./venv/bin/python manage.py runserver
+./venv/bin/python backend/manage.py runserver
 ```
 
 **What it does**: Handles HTTP requests, serves API endpoints
@@ -29,7 +29,7 @@ source venv/bin/activate
 ```bash
 cd /Users/pedmonte/projects/whatsapp-ai
 source venv/bin/activate
-./venv/bin/celery -A whatsapp_ai_chatbot worker --loglevel=info
+./venv/bin/celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
 ```
 
 **What it does**: Processes async tasks (WhatsApp messages, AI responses)
@@ -42,7 +42,7 @@ source venv/bin/activate
 ```bash
 cd /Users/pedmonte/projects/whatsapp-ai
 source venv/bin/activate
-./venv/bin/celery -A whatsapp_ai_chatbot beat --loglevel=info
+./venv/bin/celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
 ```
 
 **What it does**: Scheduled periodic tasks
@@ -104,7 +104,7 @@ brew services restart postgresql@14
 redis-cli ping
 
 # Try with debug logging
-./venv/bin/celery -A whatsapp_ai_chatbot worker --loglevel=debug
+./venv/bin/celery -A backend.whatsapp_ai_chatbot worker --loglevel=debug
 ```
 
 ---
