@@ -106,6 +106,7 @@ WhatsApp User → Twilio API → Django Webhook → Celery Task → AI API
   - `health.py`: Health check endpoint (verifies DB + Redis connectivity)
   - `tasks.py`: Celery tasks with retry logic
   - `models.py`: Conversation, Message, AIConfiguration, WebhookLog (all use UUID PKs)
+  - `booking_processor.py`: Processes booking-related messages from WhatsApp chatbot
 
 - **whatsapp**: Twilio/WhatsApp integration
   - `client.py`: WhatsAppClient for sending messages via Twilio SDK
@@ -117,12 +118,60 @@ WhatsApp User → Twilio API → Django Webhook → Celery Task → AI API
   - `adapters/openrouter_adapter.py`: OpenRouter implementation (unified API for multiple models)
   - `factory.py`: Adapter factory based on configuration
 
+- **booking_system**: Resort activity booking system
+  - `models.py`: Activity, TimeSlot, Booking, UserPreference, ActivityImage
+  - `services.py`: Business logic layer (BookingService for all booking operations)
+  - `views.py`: DRF viewsets for REST API endpoints
+  - `serializers.py`: DRF serializers with validation
+  - `auth.py`: OTP generation and phone number validation
+  - `auth_views.py`: Authentication endpoints (request OTP, verify OTP, logout, current user)
+  - `authentication.py`: SessionTokenAuthentication class for token-based auth
+  - `permissions.py`: IsAuthenticatedWithSessionToken permission class
+  - `notifications.py`: WhatsApp notification sending (booking confirmations, reminders)
+  - `tasks.py`: Celery tasks (expire pending bookings, send reminders)
+  - Booking flow: WhatsApp chatbot → Pending booking → Web app confirmation → WhatsApp notification
+
+### Frontend Architecture (React + TypeScript + Vite)
+
+**Tech Stack:**
+- React 19 with TypeScript for type safety
+- Vite for fast development and optimized builds
+- React Router for client-side routing
+- TanStack Query (React Query) for server state management
+- Axios for HTTP requests
+- Tailwind CSS v4 with Radix UI components
+- shadcn/ui component library
+
+**Key Components:**
+- `AuthContext.tsx`: Global authentication state (phone number, session token, login/logout)
+- `ProtectedRoute.tsx`: Route wrapper requiring authentication
+- `api/` directory: Axios clients and API service functions
+- `pages/`: LoginPage, ActivitiesPage, ActivityDetailPage, BookingsPage
+- `components/activities/`: ActivityCard, ActivityGrid, ActivityFilter
+- `components/auth/`: PhoneInput, OTPForm
+- `components/ui/`: shadcn components (button, card, input, etc.)
+
+**Authentication Flow:**
+1. User enters phone number → `api.requestOTP()` → Receives OTP via WhatsApp
+2. User enters OTP → `api.verifyOTP()` → Receives session token
+3. Token stored in localStorage and included in all authenticated requests
+4. `AuthContext` provides `isAuthenticated`, `login()`, `logout()` globally
+5. `ProtectedRoute` redirects unauthenticated users to `/login`
+
 ### Data Models (all use UUID primary keys)
 
+**Chatbot Core:**
 - **Conversation**: User session (user_phone, is_active, last_activity with auto_now)
 - **Message**: Chat history (role: user/assistant/system, content, metadata as JSONField)
 - **AIConfiguration**: Provider settings (encrypted API keys via django-encrypted-model-fields)
 - **WebhookLog**: Audit trail (headers, body, response_status, processing_time)
+
+**Booking System:**
+- **Activity**: Resort activities (name, description, category, price_per_person, duration_minutes, max_capacity)
+- **ActivityImage**: Multiple images per activity (image file, order, is_primary)
+- **TimeSlot**: Available booking times (activity, start_time, end_time, available_capacity, is_active)
+- **Booking**: User reservations (user_phone, activity, time_slot, num_people, status: pending/confirmed/cancelled/completed, total_price)
+- **UserPreference**: AI recommendation preferences (user_phone, interests as JSONField, preferred_difficulty, preferred_duration)
 
 ### Configuration System
 
@@ -223,29 +272,65 @@ python backend/manage.py manage_ai_config update --activate
 
 ### Testing and Quality
 
+**Backend (Python/Django):**
 ```bash
 # Run all tests
 python backend/manage.py test
 
 # Run specific app tests
-python backend/manage.py test chatbot_core
-python backend/manage.py test chatbot_core.tests.test_message_processor
+python backend/manage.py test backend.chatbot_core
+python backend/manage.py test backend.chatbot_core.tests.test_message_processor
 
-# Type checking (entire project)
-mypy .
-
-# Type check specific files
-mypy chatbot_core/message_processor.py ai_integration/
+# Type checking
+cd backend && mypy .
 
 # Code formatting (modifies files in-place)
-black .
+cd backend && black .
 
 # Check formatting without modifying
-black --check .
+cd backend && black --check .
 
 # Linting
-flake8 .
+cd backend && flake8 .
 ```
+
+### Frontend Development
+
+**Setup:**
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env
+```
+
+**Development:**
+```bash
+# Start dev server (usually http://localhost:5173)
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint TypeScript/React code
+npm run lint
+```
+
+**Environment Variables** (`frontend/.env`):
+- `VITE_API_URL`: Backend API URL (default: `http://localhost:8000`)
+
+**Key Frontend Files:**
+- `src/api/client.ts`: Axios instance with auth interceptor
+- `src/api/index.ts`: All API service functions
+- `src/contexts/AuthContext.tsx`: Authentication state management
+- `src/App.tsx`: Route definitions and QueryClient provider
+- `src/main.tsx`: Application entry point
 
 ### Docker Management
 
@@ -279,12 +364,14 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 
 - **Black**: Line length 88, excludes migrations and venv
 - **Flake8**: Max line 88, ignores E203 (whitespace before ':') and W503 (line break before binary operator)
-- **MyPy** (`mypy.ini`):
+- **MyPy** (`backend/mypy.ini`):
   - Python 3.12 target
-  - Django plugin enabled (`django_settings_module = whatsapp_ai_chatbot.settings`)
+  - Django plugin enabled (`django_settings_module = backend.whatsapp_ai_chatbot.settings`)
   - Ignores missing imports for: celery, twilio, openai, decouple, psycopg2
-  - Special handling for management commands: `[[tool.mypy.overrides]]` disables attr-defined errors
+  - Special handling for management commands: disables attr-defined errors
   - Migrations completely ignored
+- **ESLint** (`frontend/eslint.config.js`): React hooks rules, TypeScript strict checks
+- **TypeScript** (`frontend/tsconfig.json`): Strict mode enabled
 
 ## Environment Variables
 
@@ -322,6 +409,11 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 - `RATE_LIMIT_MAX_REQUESTS`: Messages per window (default: 10)
 - `RATE_LIMIT_WINDOW_SECONDS`: Rate limit window in seconds (default: 60)
 
+**Booking System:**
+- `BOOKING_WEB_APP_URL`: Public URL of React frontend for booking confirmations (required)
+- `BOOKING_PENDING_TIMEOUT_MINUTES`: Time limit for pending booking confirmation (default: 30)
+- `BOOKING_CANCELLATION_DEADLINE_HOURS`: Hours before activity when cancellation allowed (default: 24)
+
 ## Logging
 
 **Log files** (`logs/` directory):
@@ -348,10 +440,12 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 
 **When adding new features:**
 1. **New AI provider**: Create adapter in `backend/ai_integration/adapters/`, extend factory
-2. **New error category**: Add to `ErrorCategory` enum in `error_handler.py`
+2. **New error category**: Add to `ErrorCategory` enum in `backend/chatbot_core/error_handler.py`
 3. **New management command**: Create in `backend/chatbot_core/management/commands/`
-4. **New Celery task**: Add to `backend/chatbot_core/tasks.py`, configure in `celery.py` if periodic
+4. **New Celery task**: Add to app's `tasks.py`, configure in `backend/whatsapp_ai_chatbot/celery.py` if periodic
 5. **New security check**: Add to `Sanitizer` class or create middleware
+6. **New booking feature**: Add business logic to `BookingService`, create new endpoint in `views.py`, update serializers
+7. **New frontend page**: Create in `frontend/src/pages/`, add route in `App.tsx`, create API service in `api/index.ts`
 
 **Key architectural decisions:**
 - **Conversation persistence**: Database (PostgreSQL) for durability, Redis for hot context
@@ -359,3 +453,6 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 - **AI abstraction**: Strategy pattern allows switching providers without code changes
 - **Rate limiting**: Redis atomic operations prevent race conditions in distributed systems
 - **Error handling**: Two-level catch: known errors (user-friendly) vs unexpected (generic message)
+- **Booking workflow**: Two-step process (WhatsApp initiation → Web confirmation) prevents accidental bookings
+- **Authentication**: Passwordless OTP via WhatsApp, session tokens in Redis with TTL
+- **Frontend state**: TanStack Query for server state caching, AuthContext for global auth state
