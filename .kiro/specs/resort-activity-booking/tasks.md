@@ -320,32 +320,32 @@
     - Show loading state while checking auth
     - _Requirements: 8.4_
 
-- [ ] 14. Implement activity browsing UI
-  - [ ] 14.1 Create ActivityCard component in src/components/activities/
+- [x] 14. Implement activity browsing UI
+  - [x] 14.1 Create ActivityCard component in src/components/activities/
     - Display activity image, name, price, duration, category
     - Use shadcn/ui Card component
     - Add "View Details" button linking to /activities/:id
     - Make responsive for mobile (full width on small screens)
     - _Requirements: 6.1_
-  - [ ] 14.2 Create ActivityFilter component in src/components/activities/
+  - [x] 14.2 Create ActivityFilter component in src/components/activities/
     - Implement category filter using shadcn/ui Select
     - Implement price range filter using shadcn/ui Slider (min/max)
     - Implement search input using shadcn/ui Input
     - Emit filter changes to parent via onChange callbacks
     - _Requirements: 6.1, 6.3_
-  - [ ] 14.3 Create ActivityGrid component in src/components/activities/
+  - [x] 14.3 Create ActivityGrid component in src/components/activities/
     - Display grid of ActivityCard components (responsive: 1-3 columns)
     - Implement responsive grid layout with Tailwind
     - Add loading state using shadcn/ui Skeleton
     - Add empty state when no activities match filters
     - _Requirements: 6.1_
-  - [ ] 14.4 Create ActivitiesPage in src/pages/
+  - [x] 14.4 Create ActivitiesPage in src/pages/
     - Combine ActivityFilter and ActivityGrid
     - Fetch activities from /api/v1/activities/ using React Query
     - Apply filters to API query params
     - Handle loading and error states
     - _Requirements: 6.1, 6.3, 6.4_
-  - [ ] 14.5 Create useActivities hook in src/hooks/
+  - [x] 14.5 Create useActivities hook in src/hooks/
     - Implement React Query hook for fetching activities
     - Support filtering parameters (category, search, minPrice, maxPrice)
     - Handle caching and refetching
