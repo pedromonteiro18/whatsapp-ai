@@ -32,5 +32,7 @@ export function useActivities(
     refetchOnWindowFocus: true,
     // Retry failed requests 2 times
     retry: 2,
+    // Keep previous data while fetching to prevent flicker
+    placeholderData: (previousData) => previousData,
   });
 }
