@@ -21,22 +21,30 @@ interface ActivityCardProps {
  * - Responsive design (full width on mobile)
  */
 export function ActivityCard({ activity }: ActivityCardProps) {
-  const imageUrl = activity.primary_image || activity.images[0]?.image || '/placeholder-activity.jpg';
+  // Extract image URL from primary_image object or first image
+  const imageUrl = typeof activity.primary_image === 'string'
+    ? activity.primary_image
+    : activity.primary_image?.image || activity.images[0]?.image;
+
   const categoryLabel = getCategoryLabel(activity.category);
   const priceDisplay = formatPrice(activity.price, activity.currency);
   const durationDisplay = formatDuration(activity.duration_minutes);
+
+  // Beautiful gradient placeholder with icon
+  const placeholderSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2393c5fd;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%233b82f6;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23grad)' width='400' height='300'/%3E%3Cg fill='white' opacity='0.3'%3E%3Ccircle cx='200' cy='120' r='40'/%3E%3Cpath d='M160 160 L180 200 L220 200 L240 160 Z'/%3E%3C/g%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui,sans-serif' font-size='16' fill='white' opacity='0.9'%3E${encodeURIComponent(activity.name)}%3C/text%3E%3C/svg%3E`;
 
   return (
     <Card className="hover:shadow-lg transition-shadow overflow-hidden">
       {/* Activity Image */}
       <div className="relative h-48 w-full bg-muted overflow-hidden">
         <img
-          src={imageUrl}
+          src={imageUrl || placeholderSvg}
           alt={activity.name}
-          className="h-full w-full object-cover transition-transform hover:scale-105"
+          className="h-full w-full object-cover"
+          loading="lazy"
           onError={(e) => {
-            // Fallback to placeholder if image fails to load
-            e.currentTarget.src = '/placeholder-activity.jpg';
+            // Fallback to inline SVG if image fails to load
+            e.currentTarget.src = placeholderSvg;
           }}
         />
         {/* Category Badge */}
