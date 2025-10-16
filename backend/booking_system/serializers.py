@@ -11,6 +11,25 @@ from .services import BookingService
 class ActivityImageSerializer(serializers.ModelSerializer):
     """Serializer for ActivityImage model."""
 
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        """Return image URL - handle both uploaded files and external URLs."""
+        if not obj.image:
+            return None
+
+        image_name = str(obj.image.name)
+
+        # If it's already a full URL (http:// or https://), return as-is
+        if image_name.startswith(('http://', 'https://')):
+            return image_name
+
+        # Otherwise, build the full URL for uploaded files
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
+
     class Meta:
         model = ActivityImage
         fields = ["id", "image", "alt_text", "is_primary", "order"]
