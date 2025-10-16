@@ -352,21 +352,21 @@
     - Return { data, isLoading, error, refetch }
     - _Requirements: 6.1, 6.3_
 
-- [ ] 15. Implement activity detail and availability UI
-  - [ ] 15.1 Create AvailabilityCalendar component in src/components/activities/
+- [x] 15. Implement activity detail and availability UI
+  - [x] 15.1 Create AvailabilityCalendar component in src/components/activities/
     - Display calendar for next 14 days using shadcn/ui Calendar
     - Fetch available time slots for selected date from /api/v1/activities/:id/availability
     - Show available time slots as clickable buttons
     - Color-code availability (green: available, yellow: limited, red: full)
     - Allow time slot selection and emit to parent
     - _Requirements: 4.1, 4.5, 6.5_
-  - [ ] 15.2 Create ActivityDetail component in src/components/activities/
+  - [x] 15.2 Create ActivityDetail component in src/components/activities/
     - Display full activity information (name, description, requirements, location)
     - Show image carousel using shadcn/ui Carousel
     - Display price and duration prominently
     - Show category badge using shadcn/ui Badge
     - _Requirements: 2.2, 6.1_
-  - [ ] 15.3 Create ActivityDetailPage in src/pages/
+  - [x] 15.3 Create ActivityDetailPage in src/pages/
     - Combine ActivityDetail and AvailabilityCalendar
     - Fetch activity by ID from /api/v1/activities/:id
     - Add "Book Now" button (redirects to /login if not authenticated)
