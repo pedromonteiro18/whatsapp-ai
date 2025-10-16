@@ -40,7 +40,7 @@ export function ActivityDetail({ activity }: ActivityDetailProps) {
             {sortedImages.length > 0 ? (
               sortedImages.map((image) => (
                 <CarouselItem key={image.id}>
-                  <div className="h-64 relative bg-muted">
+                  <div className="h-[28rem] relative bg-muted">
                     <img
                       src={image.image || placeholderSvg}
                       alt={image.alt_text || activity.name}
@@ -56,7 +56,7 @@ export function ActivityDetail({ activity }: ActivityDetailProps) {
               ))
             ) : (
               <CarouselItem>
-                <div className="h-64 relative bg-muted">
+                <div className="h-[28rem] relative bg-muted">
                   <img
                     src={placeholderSvg}
                     alt={activity.name}

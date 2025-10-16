@@ -80,7 +80,7 @@ export function AvailabilityCalendar({
                 <ChevronDownIcon className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+            <PopoverContent className="p-0" align="start">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -90,6 +90,7 @@ export function AvailabilityCalendar({
                   setDatePickerOpen(false);
                 }}
                 disabled={(date) => date < today || date > maxDate}
+                className="rounded-md shadow-sm w-auto"
               />
             </PopoverContent>
           </Popover>
