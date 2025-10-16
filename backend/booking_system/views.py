@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .authentication import SessionTokenAuthentication
+from .filters import ActivityFilter
 from .models import Activity, Booking, TimeSlot
 from .permissions import IsAuthenticated, IsOwnerOrReadOnly
 from .serializers import (
@@ -36,7 +37,7 @@ class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["category"]
+    filterset_class = ActivityFilter
     search_fields = ["name", "description", "location"]
     ordering_fields = ["price", "created_at", "name"]
     ordering = ["-created_at"]
