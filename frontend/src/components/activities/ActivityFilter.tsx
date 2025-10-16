@@ -33,11 +33,13 @@ interface ActivityFilterProps {
  * - Should price values display while dragging slider?
  */
 export function ActivityFilter({ filters, onChange }: ActivityFilterProps) {
-  // Local state for price range to show while dragging
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    filters.minPrice || 0,
-    filters.maxPrice || 500
-  ]);
+  // Local state for max price to show while dragging
+  const [maxPrice, setMaxPrice] = useState<number>(filters.maxPrice ?? 500);
+
+  // Sync local state when filters are cleared externally
+  if (filters.maxPrice === undefined && maxPrice !== 500) {
+    setMaxPrice(500);
+  }
 
   const handleCategoryChange = (value: string) => {
     onChange({
@@ -54,17 +56,17 @@ export function ActivityFilter({ filters, onChange }: ActivityFilterProps) {
   };
 
   const handlePriceChange = (values: number[]) => {
-    setPriceRange([values[0], values[1]]);
+    setMaxPrice(values[0]);
     // Apply filter immediately
     onChange({
       ...filters,
-      minPrice: values[0],
-      maxPrice: values[1],
+      minPrice: undefined,
+      maxPrice: values[0],
     });
   };
 
   const handleClearFilters = () => {
-    setPriceRange([0, 500]);
+    setMaxPrice(500);
     onChange({
       category: 'all',
       search: undefined,
@@ -76,8 +78,7 @@ export function ActivityFilter({ filters, onChange }: ActivityFilterProps) {
   const hasActiveFilters =
     filters.category !== 'all' ||
     !!filters.search ||
-    filters.minPrice !== undefined ||
-    filters.maxPrice !== undefined;
+    (filters.maxPrice !== undefined && filters.maxPrice < 500);
 
   return (
     <div className="bg-card border rounded-lg p-4 space-y-4">
@@ -133,19 +134,19 @@ export function ActivityFilter({ filters, onChange }: ActivityFilterProps) {
         </div>
       </div>
 
-      {/* Price Range Filter */}
+      {/* Max Price Filter */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label>Price Range</Label>
+          <Label>Max Price</Label>
           <span className="text-sm text-muted-foreground">
-            ${priceRange[0]} - ${priceRange[1]}
+            ${maxPrice}
           </span>
         </div>
         <Slider
           min={0}
           max={500}
           step={10}
-          value={priceRange}
+          value={[maxPrice]}
           onValueChange={handlePriceChange}
           className="py-4"
         />
