@@ -1,6 +1,8 @@
 import { AlertCircle } from 'lucide-react';
 import { useBookings } from '@/hooks/useBookings';
 import { BookingList } from '@/components/bookings';
+import { Loading } from '@/components/Loading';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function BookingsPage() {
@@ -9,6 +11,7 @@ export default function BookingsPage() {
     bookings,
     isLoading,
     error,
+    refetch,
     confirmBooking,
     cancelBooking,
     isConfirming,
@@ -19,12 +22,7 @@ export default function BookingsPage() {
   if (authLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
-        </div>
+        <Loading size="lg" text="Loading..." centered />
       </div>
     );
   }
@@ -63,12 +61,9 @@ export default function BookingsPage() {
             <p className="text-muted-foreground mb-4">
               {error instanceof Error ? error.message : 'Failed to load bookings'}
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-            >
+            <Button onClick={() => refetch()}>
               Try Again
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -76,7 +71,7 @@ export default function BookingsPage() {
   }
 
   // Count pending bookings for header
-  const pendingCount = bookings?.filter((b) => b.status === 'pending').length || 0;
+  const pendingCount = bookings?.filter((b: any) => b.status === 'pending').length || 0;
 
   return (
     <div className="container mx-auto px-4 py-8">

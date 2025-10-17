@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ActivityDetail } from '@/components/activities/ActivityDetail';
 import { AvailabilityCalendar } from '@/components/activities/AvailabilityCalendar';
+import { Loading } from '@/components/Loading';
 import { getActivity } from '@/services/activities';
 import { createBooking } from '@/services/bookings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,15 +38,28 @@ export default function ActivityDetailPage() {
     queryKey: ['activity', id],
     queryFn: () => getActivity(id!),
     enabled: !!id,
+    // Show toast notification on error
+    onError: (error: Error) => {
+      toast.error('Failed to load activity', {
+        description: error.message || 'Please try again later',
+      });
+    },
   });
 
   // Create booking mutation
   const createBookingMutation = useMutation({
     mutationFn: createBooking,
-    onSuccess: () => {
+    onSuccess: (data) => {
       setBookingSuccess(true);
       setBookingError(null);
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+
+      // Show success toast
+      toast.success('Booking created successfully!', {
+        description: `Your ${data.activity.name} booking is pending confirmation`,
+      });
+
+      // Redirect to bookings page
       setTimeout(() => {
         navigate('/bookings');
       }, 2000);
@@ -53,6 +68,17 @@ export default function ActivityDetailPage() {
       const message = error.response?.data?.detail || error.message || 'Failed to create booking';
       setBookingError(message);
       setBookingSuccess(false);
+
+      // Show error toast
+      toast.error('Failed to create booking', {
+        description: message,
+        action: {
+          label: 'Try Again',
+          onClick: () => {
+            setBookingError(null);
+          },
+        },
+      });
     },
   });
 
@@ -112,7 +138,7 @@ export default function ActivityDetailPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center">Loading activity details...</div>
+        <Loading size="lg" text="Loading activity details..." centered />
       </div>
     );
   }

@@ -39,6 +39,12 @@ export function useBookings() {
     refetchOnWindowFocus: true,
     // Retry failed requests 2 times
     retry: 2,
+    // Show toast notification on error
+    onError: (error: Error) => {
+      toast.error('Failed to load bookings', {
+        description: error.message || 'Please try again later',
+      });
+    },
   });
 
   // Mutation for confirming a booking

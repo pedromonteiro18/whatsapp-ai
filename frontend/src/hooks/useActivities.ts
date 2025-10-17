@@ -1,4 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { getActivities } from '@/services/activities';
 import type { Activity, ActivityFilters } from '@/types/activity';
 
@@ -10,6 +11,7 @@ import type { Activity, ActivityFilters } from '@/types/activity';
  * - Background refetching
  * - Query invalidation on filter changes
  * - Loading and error states
+ * - Toast notifications for errors
  *
  * @param filters Optional filters for activities
  * @returns Query result with activities data
@@ -34,5 +36,11 @@ export function useActivities(
     retry: 2,
     // Keep previous data while fetching to prevent flicker
     placeholderData: (previousData) => previousData,
+    // Show toast notification on error
+    onError: (error: Error) => {
+      toast.error('Failed to load activities', {
+        description: error.message || 'Please try again later',
+      });
+    },
   });
 }

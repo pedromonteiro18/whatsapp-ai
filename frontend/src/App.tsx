@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
 import ActivitiesPage from './pages/ActivitiesPage';
@@ -21,29 +23,33 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/activities" replace />} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="activities" element={<ActivitiesPage />} />
-              <Route path="activities/:id" element={<ActivityDetailPage />} />
-              <Route
-                path="bookings"
-                element={
-                  <ProtectedRoute>
-                    <BookingsPage />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-        <Toaster position="top-right" richColors />
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <NotificationProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Navigate to="/activities" replace />} />
+                  <Route path="login" element={<LoginPage />} />
+                  <Route path="activities" element={<ActivitiesPage />} />
+                  <Route path="activities/:id" element={<ActivityDetailPage />} />
+                  <Route
+                    path="bookings"
+                    element={
+                      <ProtectedRoute>
+                        <BookingsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+            <Toaster position="top-right" richColors />
+          </AuthProvider>
+        </NotificationProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
