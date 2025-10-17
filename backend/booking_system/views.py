@@ -65,12 +65,18 @@ class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Parse dates
         if start_date_str:
-            start_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
+            # Parse date string and make timezone-aware
+            naive_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
+            start_date = timezone.make_aware(naive_date) if timezone.is_naive(naive_date) else naive_date
         else:
             start_date = timezone.now()
 
         if end_date_str:
-            end_date = datetime.fromisoformat(end_date_str.replace("Z", "+00:00"))
+            # Parse date string and make timezone-aware
+            naive_date = datetime.fromisoformat(end_date_str.replace("Z", "+00:00"))
+            end_date = timezone.make_aware(naive_date) if timezone.is_naive(naive_date) else naive_date
+            # Set end date to end of day to include all slots on that date
+            end_date = end_date.replace(hour=23, minute=59, second=59)
         else:
             end_date = start_date + timedelta(days=14)
 
