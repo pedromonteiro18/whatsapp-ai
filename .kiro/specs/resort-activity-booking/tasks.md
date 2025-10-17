@@ -374,34 +374,34 @@
     - Show success message and redirect to /bookings on success
     - _Requirements: 2.2, 4.1, 6.1, 6.5_
 
-- [ ] 16. Implement booking management UI
-  - [ ] 16.1 Create BookingCard component in src/components/bookings/
+- [x] 16. Implement booking management UI
+  - [x] 16.1 Create BookingCard component in src/components/bookings/
     - Display booking summary (activity name, time, status, participants)
     - Use shadcn/ui Card and Badge components
     - Show different styling for pending (yellow) vs confirmed (green) vs cancelled (red)
     - Add action buttons based on status (confirm/decline for pending)
     - Show expiry countdown for pending bookings
     - _Requirements: 7.1, 7.2_
-  - [ ] 16.2 Create BookingActions component in src/components/bookings/
+  - [x] 16.2 Create BookingActions component in src/components/bookings/
     - Implement "Confirm" button using shadcn/ui AlertDialog
     - Implement "Cancel" button using shadcn/ui AlertDialog
     - Show confirmation dialogs before actions
     - Handle API calls to /api/v1/bookings/:id/confirm and /api/v1/bookings/:id/cancel
     - Show success/error toasts using shadcn/ui Toast
     - _Requirements: 7.3, 7.4, 7.5, 7.6_
-  - [ ] 16.3 Create BookingList component in src/components/bookings/
+  - [x] 16.3 Create BookingList component in src/components/bookings/
     - Display list of BookingCard components
     - Group by status (pending, confirmed, past)
     - Add filtering tabs using shadcn/ui Tabs
     - Handle empty states for each tab
     - _Requirements: 7.1_
-  - [ ] 16.4 Create BookingsPage in src/pages/
+  - [x] 16.4 Create BookingsPage in src/pages/
     - Fetch user bookings from /api/v1/bookings/ using React Query
     - Display BookingList with BookingActions
     - Highlight pending bookings requiring action at top
     - Auto-refresh on booking actions (invalidate queries)
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
-  - [ ] 16.5 Create useBookings hook in src/hooks/
+  - [x] 16.5 Create useBookings hook in src/hooks/
     - Implement React Query hook for fetching bookings
     - Implement mutations for confirm/cancel actions
     - Handle optimistic updates for better UX
