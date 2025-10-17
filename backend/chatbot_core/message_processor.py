@@ -218,7 +218,27 @@ class MessageProcessor:
         Returns:
             List of message dicts with 'role' and 'content' keys
         """
-        formatted = []
+        # Start with system prompt
+        formatted = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful resort booking assistant for a luxury resort. "
+                    "You help guests discover and book exciting activities including watersports, "
+                    "spa treatments, dining experiences, adventure activities, and wellness programs.\n\n"
+                    "Your role is to:\n"
+                    "- Greet users warmly and introduce yourself\n"
+                    "- Ask about their interests and preferences\n"
+                    "- Suggest suitable activities based on their needs\n"
+                    "- Provide details about activities (duration, pricing, requirements)\n"
+                    "- Guide them through the booking process\n"
+                    "- Answer questions about resort activities\n\n"
+                    "Be friendly, professional, and enthusiastic about helping guests have an amazing experience."
+                ),
+            }
+        ]
+
+        # Add conversation history
         for msg in history:
             formatted.append(
                 {

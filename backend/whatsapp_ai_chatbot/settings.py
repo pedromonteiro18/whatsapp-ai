@@ -33,9 +33,20 @@ SECRET_KEY = config(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = cast(str, config("ALLOWED_HOSTS", default="localhost,127.0.0.1")).split(
-    ","
-)
+# Parse ALLOWED_HOSTS from config
+_allowed_hosts = cast(
+    str,
+    config(
+        "ALLOWED_HOSTS",
+        default="localhost,127.0.0.1",
+    ),
+).split(",")
+
+# Add wildcard for Serveo subdomains (for development/testing)
+if DEBUG:
+    _allowed_hosts.extend([".serveo.net", "*"])
+
+ALLOWED_HOSTS = _allowed_hosts
 
 
 # Application definition
