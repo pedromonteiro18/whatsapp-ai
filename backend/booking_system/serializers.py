@@ -68,11 +68,13 @@ class ActivitySerializer(serializers.ModelSerializer):
         """Get the primary image URL or first image if no primary set."""
         primary = obj.images.filter(is_primary=True).first()
         if primary:
-            return ActivityImageSerializer(primary).data
+            serializer = ActivityImageSerializer(primary, context=self.context)
+            return serializer.data.get('image')
 
         first_image = obj.images.first()
         if first_image:
-            return ActivityImageSerializer(first_image).data
+            serializer = ActivityImageSerializer(first_image, context=self.context)
+            return serializer.data.get('image')
 
         return None
 
