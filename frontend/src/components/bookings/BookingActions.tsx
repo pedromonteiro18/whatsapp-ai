@@ -48,11 +48,13 @@ export function BookingActions({
   const showConfirm = booking.status === 'pending';
   const showCancel = booking.status === 'pending' || booking.status === 'confirmed';
 
-  // Check if booking can be cancelled (not within 24 hours of activity)
+  // Check if booking can be cancelled
+  // Pending bookings can always be cancelled
+  // Confirmed bookings can only be cancelled if more than 24 hours before activity
   const activityStartTime = new Date(booking.time_slot.start_time);
   const now = new Date();
   const hoursUntilActivity = (activityStartTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-  const canCancel = hoursUntilActivity > 24;
+  const canCancel = booking.status === 'pending' || hoursUntilActivity > 24;
 
   const handleConfirm = () => {
     onConfirm(booking.id);
