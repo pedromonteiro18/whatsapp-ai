@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/carousel';
 import type { Activity } from '@/types/activity';
 import { formatPrice, formatDuration, getCategoryLabel } from '@/types/activity';
-import { Clock, MapPin, Users, Info, ImageIcon } from 'lucide-react';
+import { Clock, MapPin, Users, Info } from 'lucide-react';
 
 interface ActivityDetailProps {
   activity: Activity;

@@ -21,10 +21,8 @@ interface ActivityCardProps {
  * - Responsive design (full width on mobile)
  */
 export function ActivityCard({ activity }: ActivityCardProps) {
-  // Extract image URL from primary_image object or first image
-  const imageUrl = typeof activity.primary_image === 'string'
-    ? activity.primary_image
-    : activity.primary_image?.image || activity.images[0]?.image;
+  // Extract image URL from primary_image or first image
+  const imageUrl = activity.primary_image || (activity.images.length > 0 ? activity.images[0].image : undefined);
 
   const categoryLabel = getCategoryLabel(activity.category);
   const priceDisplay = formatPrice(activity.price, activity.currency);
