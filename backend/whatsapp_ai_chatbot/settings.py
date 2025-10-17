@@ -161,12 +161,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
 # Celery Configuration
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = config(
@@ -197,6 +191,15 @@ OPENAI_TEMPERATURE = config("OPENAI_TEMPERATURE", default=0.7, cast=float)
 # Application Settings
 MAX_CONVERSATION_HISTORY = config("MAX_CONVERSATION_HISTORY", default=10, cast=int)
 SESSION_TIMEOUT_MINUTES = config("SESSION_TIMEOUT_MINUTES", default=30, cast=int)
+
+# Booking System Settings
+BOOKING_PENDING_TIMEOUT_MINUTES = config(
+    "BOOKING_PENDING_TIMEOUT_MINUTES", default=30, cast=int
+)
+BOOKING_CANCELLATION_DEADLINE_HOURS = config(
+    "BOOKING_CANCELLATION_DEADLINE_HOURS", default=24, cast=int
+)
+BOOKING_WEB_APP_URL = config("BOOKING_WEB_APP_URL")
 
 # Logging Configuration
 LOGGING = {
@@ -269,6 +272,11 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "backend.booking_system": {
+            "handlers": ["console", "file", "error_file"],
+            "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": False,
+        },
     },
     "root": {
         "handlers": ["console", "file"],
@@ -313,15 +321,17 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_NAME = "whatsapp_ai_csrftoken"
 
-# CORS Settings (for webhook endpoints)
+# CORS Settings (for frontend and webhook endpoints)
+# Default includes localhost development URLs and Twilio webhook domain
+# For production, add your deployed frontend URL via CORS_ALLOWED_ORIGINS env variable
 CORS_ALLOWED_ORIGINS = cast(
     str,
     config(
         "CORS_ALLOWED_ORIGINS",
-        default="https://api.twilio.com",
+        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://api.twilio.com",
     ),
 ).split(",")
-CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_CREDENTIALS = True  # Required for session authentication
 
 # Content Security Policy (optional - uncomment to enable)
 # CSP_DEFAULT_SRC = ("'self'",)
