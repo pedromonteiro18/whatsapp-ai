@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 /**
  * Centralized Axios instance with interceptors for authentication and error handling
@@ -19,7 +19,7 @@ const apiClient = axios.create({
  * Request interceptor to attach Bearer token to all requests
  */
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config) => {
     // Get token from localStorage
     const token = localStorage.getItem('auth_token');
 
