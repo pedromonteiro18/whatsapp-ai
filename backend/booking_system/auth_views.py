@@ -95,6 +95,17 @@ class RequestOTPView(APIView):
                     phone_number,
                     dev_otp,
                 )
+                # In development mode with DEV_OTP_CODE set, return success
+                # The frontend will work with the dev OTP code
+                return Response(
+                    {
+                        "message": "OTP sent successfully (dev mode)",
+                        "phone_number": phone_number,
+                        "remaining_requests": remaining,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            # Production mode without DEV_OTP_CODE - return error
             return Response(
                 {"error": "Failed to send OTP. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
