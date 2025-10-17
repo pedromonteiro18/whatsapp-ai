@@ -258,12 +258,14 @@ class BookingService:
             )
 
         # Check cancellation deadline (24 hours before activity)
-        cancellation_deadline = booking.time_slot.start_time - timedelta(hours=24)
-        if timezone.now() > cancellation_deadline:
-            raise ValueError(
-                "Cancellation deadline has passed. "
-                "Bookings must be cancelled at least 24 hours before the activity."
-            )
+        # Pending bookings can be cancelled freely, only confirmed bookings have deadline
+        if booking.status == "confirmed":
+            cancellation_deadline = booking.time_slot.start_time - timedelta(hours=24)
+            if timezone.now() > cancellation_deadline:
+                raise ValueError(
+                    "Cancellation deadline has passed. "
+                    "Bookings must be cancelled at least 24 hours before the activity."
+                )
 
         # Get time slot with lock
         time_slot = TimeSlot.objects.select_for_update().get(id=booking.time_slot_id)
