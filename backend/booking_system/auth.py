@@ -67,6 +67,9 @@ def verify_otp(phone_number: str, otp: str) -> bool:
     """
     Verify OTP from Redis.
 
+    In development mode, if DEV_OTP_CODE is set, that code will be accepted
+    instead of requiring a real OTP from Redis.
+
     Args:
         phone_number: User's phone number
         otp: OTP code to verify
@@ -74,6 +77,16 @@ def verify_otp(phone_number: str, otp: str) -> bool:
     Returns:
         bool: True if OTP is valid
     """
+    # Check for development bypass
+    from decouple import config
+
+    dev_otp_code = config("DEV_OTP_CODE", default=None)
+    if dev_otp_code and otp == dev_otp_code:
+        logger.warning(
+            "⚠️  DEVELOPMENT MODE: Accepted dev OTP code for phone %s", phone_number
+        )
+        return True
+
     try:
         key = f"otp:{phone_number}"
         stored_otp = redis_client.get(key)
