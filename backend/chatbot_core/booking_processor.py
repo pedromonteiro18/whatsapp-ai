@@ -180,18 +180,30 @@ class BookingMessageProcessor:
         continuation of multi-turn conversations.
 
         Args:
-            user_phone: User's phone number
+            user_phone: User's phone number (may include whatsapp: prefix)
             message: The user's message text
 
         Returns:
             True if message was handled, False if not a booking intent
         """
+        # Normalize phone number by removing whatsapp: prefix for database consistency
+        normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+
         # Check if there's an ongoing conversation state
         state = self._get_conversation_state(user_phone)
         if state and state.get("intent"):
+            # Check if user wants to cancel the workflow
+            if self._is_cancel_keyword(message):
+                self._clear_conversation_state(user_phone)
+                self.whatsapp_client.send_message(
+                    user_phone,
+                    "✅ Booking workflow cancelled. Feel free to start a new booking anytime!"
+                )
+                return True
+
             # Continue ongoing conversation
             logger.info(
-                f"Continuing {state['intent']} conversation for {user_phone}, "
+                f"Continuing {state['intent']} conversation for {normalized_phone}, "
                 f"step {state.get('step', 0)}"
             )
             return self._continue_conversation(user_phone, message, state)
@@ -202,25 +214,26 @@ class BookingMessageProcessor:
         if not intent:
             return False
 
-        logger.info(f"Processing new booking intent '{intent}' for {user_phone}")
+        logger.info(f"Processing new booking intent '{intent}' for {normalized_phone}")
 
         try:
+            # Use normalized phone for all booking operations (WhatsApp client still uses original)
             if intent == "browse":
                 return self.handle_browse(user_phone, message)
             elif intent == "book":
-                return self.handle_booking(user_phone, message)
+                return self.handle_booking(user_phone, message, normalized_phone)
             elif intent == "check":
-                return self.handle_check_booking(user_phone, message)
+                return self.handle_check_booking(user_phone, message, normalized_phone)
             elif intent == "cancel":
-                return self.handle_cancel_booking(user_phone, message)
+                return self.handle_cancel_booking(user_phone, message, normalized_phone)
             elif intent == "recommend":
-                return self.handle_recommendations(user_phone, message)
+                return self.handle_recommendations(user_phone, message, normalized_phone)
             else:
                 return False
 
         except Exception as e:
             logger.error(
-                f"Error processing booking intent '{intent}' for {user_phone}: {e}",
+                f"Error processing booking intent '{intent}' for {normalized_phone}: {e}",
                 exc_info=True,
             )
             self.whatsapp_client.send_message(
@@ -326,7 +339,7 @@ class BookingMessageProcessor:
             )
             return True
 
-    def handle_booking(self, user_phone: str, message: str) -> bool:
+    def handle_booking(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
         """
         Handle booking creation with multi-turn conversation.
 
@@ -334,12 +347,17 @@ class BookingMessageProcessor:
         participant count through multiple messages.
 
         Args:
-            user_phone: User's phone number
+            user_phone: User's phone number (with whatsapp: prefix for sending messages)
             message: The user's message text
+            normalized_phone: User's phone number without whatsapp: prefix (for database)
 
         Returns:
             True if handled successfully
         """
+        # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
+        if normalized_phone is None:
+            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+
         # Import here to avoid circular imports
         from backend.booking_system.models import Activity
 
@@ -355,6 +373,7 @@ class BookingMessageProcessor:
                     "activity_id": str(activity.id),
                     "time_slot_id": None,
                     "participants": None,
+                    "normalized_phone": normalized_phone,  # Store for later use
                 }
                 self._set_conversation_state(user_phone, state)
                 return self._show_time_slots(user_phone, activity)
@@ -366,6 +385,7 @@ class BookingMessageProcessor:
                     "activity_id": None,
                     "time_slot_id": None,
                     "participants": None,
+                    "normalized_phone": normalized_phone,  # Store for later use
                 }
                 self._set_conversation_state(user_phone, state)
 
@@ -502,9 +522,10 @@ class BookingMessageProcessor:
                         self.whatsapp_client.send_message(user_phone, msg)
                         return True
 
-                    # Create the booking
+                    # Create the booking with normalized phone
+                    normalized_phone = state.get("normalized_phone", user_phone.replace("whatsapp:", ""))
                     booking = BookingService.create_booking(
-                        user_phone=user_phone,
+                        user_phone=normalized_phone,
                         activity_id=state["activity_id"],
                         time_slot_id=state["time_slot_id"],
                         participants=participants,
@@ -514,25 +535,8 @@ class BookingMessageProcessor:
                     # Clear conversation state
                     self._clear_conversation_state(user_phone)
 
-                    # Send confirmation
-                    activity = booking.activity
-                    time_slot = booking.time_slot
-                    formatted_time = time_slot.start_time.strftime(
-                        "%A, %B %d at %I:%M %p"
-                    )
-                    response = (
-                        f"✅ *Booking Created!*\n\n"
-                        f"*{activity.name}*\n"
-                        f"📅 {formatted_time}\n"
-                        f"👥 {participants} participant(s)\n"
-                        f"💵 Total: ${booking.total_price}\n"
-                        f"📍 {activity.location}\n\n"
-                        f"⚠️ *Important*: Please confirm within 30 minutes "
-                        f"or your booking will expire.\n\n"
-                        f"Booking ID: `{str(booking.id)[:8]}`\n"
-                        f"Status: {booking.status.upper()}"
-                    )
-                    self.whatsapp_client.send_message(user_phone, response)
+                    # Booking confirmation message is sent by NotificationService
+                    # (called from BookingService.create_booking)
                     return True
 
                 except ValueError:
@@ -554,24 +558,29 @@ class BookingMessageProcessor:
 
         return True
 
-    def handle_check_booking(self, user_phone: str, message: str) -> bool:
+    def handle_check_booking(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
         """
         Handle checking user's bookings.
 
         Retrieves and displays user's bookings grouped by status.
 
         Args:
-            user_phone: User's phone number
+            user_phone: User's phone number (with whatsapp: prefix for sending messages)
             message: The user's message text
+            normalized_phone: User's phone number without whatsapp: prefix (for database)
 
         Returns:
             True if handled successfully
         """
+        # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
+        if normalized_phone is None:
+            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+
         from backend.booking_system.services import BookingService
 
         try:
-            # Get all user bookings
-            bookings = list(BookingService.get_user_bookings(user_phone))
+            # Get all user bookings using normalized phone
+            bookings = list(BookingService.get_user_bookings(normalized_phone))
 
             if not bookings:
                 msg = (
@@ -640,25 +649,30 @@ class BookingMessageProcessor:
             )
             return True
 
-    def handle_cancel_booking(self, user_phone: str, message: str) -> bool:
+    def handle_cancel_booking(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
         """
         Handle booking cancellation requests.
 
         Initiates a two-step cancellation flow.
 
         Args:
-            user_phone: User's phone number
+            user_phone: User's phone number (with whatsapp: prefix for sending messages)
             message: The user's message text
+            normalized_phone: User's phone number without whatsapp: prefix (for database)
 
         Returns:
             True if handled successfully
         """
+        # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
+        if normalized_phone is None:
+            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+
         from backend.booking_system.services import BookingService
 
         try:
-            # Get user's confirmed bookings
+            # Get user's confirmed bookings using normalized phone
             bookings = list(
-                BookingService.get_user_bookings(user_phone, status="confirmed")
+                BookingService.get_user_bookings(normalized_phone, status="confirmed")
             )
 
             if not bookings:
@@ -672,6 +686,7 @@ class BookingMessageProcessor:
                 "intent": "cancel",
                 "step": 1,
                 "bookings": [str(b.id) for b in bookings[:5]],  # Store IDs
+                "normalized_phone": normalized_phone,  # Store for later use
             }
             self._set_conversation_state(user_phone, state)
 
@@ -706,7 +721,7 @@ class BookingMessageProcessor:
         Continue the booking cancellation flow.
 
         Args:
-            user_phone: User's phone number
+            user_phone: User's phone number (with whatsapp: prefix for sending messages)
             message: The user's message text
             state: Current conversation state
 
@@ -718,6 +733,7 @@ class BookingMessageProcessor:
         try:
             booking_num = int(message.strip())
             bookings = state.get("bookings", [])
+            normalized_phone = state.get("normalized_phone", user_phone.replace("whatsapp:", ""))
 
             if 1 <= booking_num <= len(bookings):
                 booking_id = bookings[booking_num - 1]
@@ -725,7 +741,7 @@ class BookingMessageProcessor:
                 try:
                     booking = BookingService.cancel_booking(
                         booking_id=booking_id,
-                        user_phone=user_phone,
+                        user_phone=normalized_phone,
                         reason="User requested cancellation via WhatsApp",
                     )
 
@@ -769,26 +785,31 @@ class BookingMessageProcessor:
             )
             return True
 
-    def handle_recommendations(self, user_phone: str, message: str) -> bool:
+    def handle_recommendations(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
         """
         Handle AI-powered recommendation requests.
 
         Calls the RecommendationService to get personalized suggestions.
 
         Args:
-            user_phone: User's phone number
+            user_phone: User's phone number (with whatsapp: prefix for sending messages)
             message: The user's message text
+            normalized_phone: User's phone number without whatsapp: prefix (for database)
 
         Returns:
             True if handled successfully
         """
+        # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
+        if normalized_phone is None:
+            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+
         from backend.booking_system.services import RecommendationService
 
         try:
-            # Get AI recommendations
+            # Get AI recommendations using normalized phone
             recommendation_service = RecommendationService()
             recommendations = recommendation_service.get_recommendations(
-                user_phone=user_phone, count=3
+                user_phone=normalized_phone, count=3
             )
 
             if not recommendations:
@@ -828,6 +849,20 @@ class BookingMessageProcessor:
             return True
 
     # Helper methods
+
+    def _is_cancel_keyword(self, message: str) -> bool:
+        """
+        Check if message contains cancel/exit keywords.
+
+        Args:
+            message: User message text
+
+        Returns:
+            True if message is a cancel/exit keyword
+        """
+        cancel_keywords = ["cancel", "exit", "stop", "quit", "abort", "nevermind"]
+        message_lower = message.lower().strip()
+        return message_lower in cancel_keywords
 
     def _extract_category(self, message: str) -> Optional[str]:
         """Extract category from message if mentioned."""
