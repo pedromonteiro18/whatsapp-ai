@@ -409,26 +409,29 @@
     - Return { bookings, isLoading, error, confirmBooking, cancelBooking }
     - _Requirements: 7.1, 7.3, 7.4_
 
-- [ ] 17. Implement API service layer
-  - [ ] 17.1 Create axios instance with interceptors in src/services/api.ts
+- [x] 17. Implement API service layer
+  - [x] 17.1 Create axios instance with interceptors in src/api/client.ts
     - Configure base URL from import.meta.env.VITE_API_URL
     - Add request interceptor to attach Bearer token from localStorage
     - Add response interceptor for error handling
     - Handle 401 errors (clear auth and redirect to /login)
     - Export configured axios instance
     - _Requirements: 8.3, 8.4, 12.1, 12.2_
-  - [ ] 17.2 Create activity API methods in src/services/activities.ts
-    - Implement getActivities(filters), getActivity(id), getAvailability(id, params)
+  - [x] 17.2 Refactor activity API methods to use centralized client
+    - Update getActivities(filters), getActivity(id), getAvailability(id, params)
+    - Replace direct axios calls with apiClient
     - Type all requests and responses using TypeScript interfaces
     - Export activity service functions
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
-  - [ ] 17.3 Create booking API methods in src/services/bookings.ts
-    - Implement getBookings(), createBooking(data), confirmBooking(id), cancelBooking(id, reason)
+  - [x] 17.3 Refactor booking API methods to use centralized client
+    - Update getBookings(), createBooking(data), confirmBooking(id), cancelBooking(id, reason)
+    - Replace direct axios calls with apiClient
     - Type all requests and responses using TypeScript interfaces
     - Export booking service functions
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
-  - [ ] 17.4 Create auth API methods in src/services/auth.ts
-    - Implement requestOTP(phoneNumber), verifyOTP(phoneNumber, otp), logout()
+  - [x] 17.4 Refactor auth API methods to use centralized client
+    - Update requestOTP(phoneNumber), verifyOTP(phoneNumber, otp), logout()
+    - Replace direct axios calls with apiClient
     - Type all requests and responses using TypeScript interfaces
     - Export auth service functions
     - _Requirements: 8.1, 8.2, 8.3_

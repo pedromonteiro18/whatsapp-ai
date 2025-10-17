@@ -1,12 +1,10 @@
-import axios from 'axios';
+import apiClient from '@/api/client';
 import type {
   Activity,
   ActivityFilters,
   ActivitiesResponse,
   TimeSlot,
 } from '@/types/activity';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 /**
  * Build query params from filters
@@ -46,8 +44,8 @@ function buildQueryParams(filters?: ActivityFilters): Record<string, string> {
 export async function getActivities(filters?: ActivityFilters): Promise<Activity[]> {
   const params = buildQueryParams(filters);
 
-  const response = await axios.get<ActivitiesResponse>(
-    `${API_BASE_URL}/activities/`,
+  const response = await apiClient.get<ActivitiesResponse>(
+    '/activities/',
     { params }
   );
 
@@ -61,8 +59,8 @@ export async function getActivities(filters?: ActivityFilters): Promise<Activity
  * GET /api/v1/activities/:id/
  */
 export async function getActivity(id: string): Promise<Activity> {
-  const response = await axios.get<Activity>(
-    `${API_BASE_URL}/activities/${id}/`
+  const response = await apiClient.get<Activity>(
+    `/activities/${id}/`
   );
   return response.data;
 }
@@ -79,8 +77,8 @@ export async function getActivityAvailability(
     participants?: number;
   } = {}
 ): Promise<TimeSlot[]> {
-  const response = await axios.get<TimeSlot[]>(
-    `${API_BASE_URL}/activities/${id}/availability/`,
+  const response = await apiClient.get<TimeSlot[]>(
+    `/activities/${id}/availability/`,
     { params }
   );
   return response.data;

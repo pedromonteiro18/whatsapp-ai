@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from '@/api/client';
 import type {
   OTPRequestRequest,
   OTPRequestResponse,
@@ -6,15 +6,13 @@ import type {
   OTPVerifyResponse
 } from '@/types/auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
-
 /**
  * Request OTP for phone number verification
  * POST /api/v1/auth/request-otp/
  */
 export async function requestOTP(phoneNumber: string): Promise<OTPRequestResponse> {
-  const response = await axios.post<OTPRequestResponse>(
-    `${API_BASE_URL}/auth/request-otp/`,
+  const response = await apiClient.post<OTPRequestResponse>(
+    '/auth/request-otp/',
     { phone_number: phoneNumber } as OTPRequestRequest
   );
   return response.data;
@@ -28,8 +26,8 @@ export async function verifyOTP(
   phoneNumber: string,
   otp: string
 ): Promise<OTPVerifyResponse> {
-  const response = await axios.post<OTPVerifyResponse>(
-    `${API_BASE_URL}/auth/verify-otp/`,
+  const response = await apiClient.post<OTPVerifyResponse>(
+    '/auth/verify-otp/',
     { phone_number: phoneNumber, otp } as OTPVerifyRequest
   );
   return response.data;
@@ -38,32 +36,19 @@ export async function verifyOTP(
 /**
  * Logout and delete session
  * POST /api/v1/auth/logout/
+ * Note: Authorization header is automatically added by the API client interceptor
  */
 export async function logout(token: string): Promise<void> {
-  await axios.post(
-    `${API_BASE_URL}/auth/logout/`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  await apiClient.post('/auth/logout/', {});
 }
 
 /**
  * Get current user information
  * GET /api/v1/auth/me/
+ * Note: Authorization header is automatically added by the API client interceptor
  */
 export async function getCurrentUser(token: string): Promise<{ phone_number: string; authenticated: boolean }> {
-  const response = await axios.get(
-    `${API_BASE_URL}/auth/me/`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const response = await apiClient.get('/auth/me/');
   return response.data;
 }
 
