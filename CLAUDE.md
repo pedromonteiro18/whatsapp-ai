@@ -270,6 +270,29 @@ python backend/manage.py manage_ai_config test
 python backend/manage.py manage_ai_config update --activate
 ```
 
+**Booking System Data Management:**
+```bash
+# Seed sample activities (creates example resort activities)
+python backend/manage.py seed_activities
+
+# Generate time slots for activities (creates available booking times)
+# Options: --days N (number of days ahead, default 30), --slots-per-day N (default 4)
+python backend/manage.py generate_timeslots --days 30 --slots-per-day 4
+
+# Download themed activity images from Pexels API
+# Requires PEXELS_API_KEY environment variable
+# Downloads high-quality images based on activity categories
+python backend/manage.py download_activity_images
+
+# Example workflow for setting up a new booking system:
+# 1. Create sample activities
+python backend/manage.py seed_activities
+# 2. Generate time slots
+python backend/manage.py generate_timeslots --days 60
+# 3. Download activity images (optional, requires Pexels API key)
+python backend/manage.py download_activity_images
+```
+
 ### Testing and Quality
 
 **Backend (Python/Django):**
@@ -279,10 +302,27 @@ python backend/manage.py test
 
 # Run specific app tests
 python backend/manage.py test backend.chatbot_core
+python backend/manage.py test backend.whatsapp
+python backend/manage.py test backend.booking_system
+
+# Run specific test file
 python backend/manage.py test backend.chatbot_core.tests.test_message_processor
+
+# Run specific test class or method
+python backend/manage.py test backend.chatbot_core.tests.test_message_processor.MessageProcessorTestCase
+python backend/manage.py test backend.chatbot_core.tests.test_message_processor.MessageProcessorTestCase.test_process_message_success
+
+# Run tests with verbosity
+python backend/manage.py test --verbosity=2
+
+# Run tests and keep test database
+python backend/manage.py test --keepdb
 
 # Type checking
 cd backend && mypy .
+
+# Type check specific module
+cd backend && mypy chatbot_core/
 
 # Code formatting (modifies files in-place)
 cd backend && black .
@@ -292,6 +332,23 @@ cd backend && black --check .
 
 # Linting
 cd backend && flake8 .
+
+# Check specific app
+cd backend && flake8 chatbot_core/
+```
+
+**Frontend (React/TypeScript):**
+```bash
+cd frontend
+
+# Type checking
+npm run build  # TypeScript compilation is part of build
+
+# Linting
+npm run lint
+
+# Linting with auto-fix
+npm run lint -- --fix
 ```
 
 ### Frontend Development
@@ -325,12 +382,41 @@ npm run lint
 **Environment Variables** (`frontend/.env`):
 - `VITE_API_URL`: Backend API URL (default: `http://localhost:8000`)
 
+**CORS Configuration:**
+- Backend must include frontend URL in `CORS_ALLOWED_ORIGINS` setting (`settings.py`)
+- Default development setup allows `http://localhost:5173`
+- For production, add your production frontend domain to CORS settings
+- If using ngrok/Serveo for development, add tunnel domain to both `ALLOWED_HOSTS` and `CORS_ALLOWED_ORIGINS`
+
 **Key Frontend Files:**
 - `src/api/client.ts`: Axios instance with auth interceptor
 - `src/api/index.ts`: All API service functions
 - `src/contexts/AuthContext.tsx`: Authentication state management
 - `src/App.tsx`: Route definitions and QueryClient provider
 - `src/main.tsx`: Application entry point
+
+**Full-Stack Development Workflow:**
+```bash
+# Terminal 1: Start backend infrastructure (if using hybrid Docker approach)
+docker-compose -f infrastructure/docker-compose.yml up db redis
+
+# Terminal 2: Start Django
+python backend/manage.py runserver
+
+# Terminal 3: Start Celery worker
+celery -A backend.whatsapp_ai_chatbot worker --loglevel=info
+
+# Terminal 4: Start Celery beat (if using booking system)
+celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
+
+# Terminal 5: Start frontend
+cd frontend && npm run dev
+
+# Access:
+# - Backend API: http://localhost:8000
+# - Frontend: http://localhost:5173
+# - Django Admin: http://localhost:8000/admin
+```
 
 ### Docker Management
 
@@ -397,6 +483,9 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 - `TWILIO_WHATSAPP_NUMBER`: Format `whatsapp:+14155238886`
 - `SKIP_WEBHOOK_SIGNATURE_VERIFICATION`: Set to `True` to skip signature verification (development only, never in production)
 
+**Development Shortcuts:**
+- `DEV_OTP_CODE`: Hardcoded OTP for development (e.g., `000000`). When set, this code will be accepted for login instead of requiring WhatsApp OTP delivery. Dramatically speeds up local development workflow. **NEVER set in production**.
+
 **AI Provider** (choose one):
 - **OpenRouter**: `OPENROUTER_API_KEY`, `AI_MODEL=openai/gpt-4`
 - **OpenAI**: `OPENAI_API_KEY`, `OPENAI_MODEL=gpt-4`
@@ -456,3 +545,20 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 - **Booking workflow**: Two-step process (WhatsApp initiation → Web confirmation) prevents accidental bookings
 - **Authentication**: Passwordless OTP via WhatsApp, session tokens in Redis with TTL
 - **Frontend state**: TanStack Query for server state caching, AuthContext for global auth state
+
+## Additional Resources
+
+**Detailed Documentation:**
+- `docs/SETUP.md`: Comprehensive setup guide with troubleshooting
+- `docs/API_DOCUMENTATION.md`: Complete API reference with examples
+- `docs/BOOKING_SYSTEM_README.md`: In-depth booking system documentation
+- `docs/DEV_AUTH.md`: Authentication system details
+- `docs/SERVEO_SETUP.md`: Guide for exposing local development server
+- `docs/START_BACKEND.md`: Quick reference for starting backend services
+
+**Feature Specifications:**
+- `.kiro/specs/whatsapp-ai-chatbot/`: Original chatbot feature specs
+- `.kiro/specs/resort-activity-booking/`: Booking system design and requirements
+
+**System Prompt Configuration:**
+The booking assistant uses a specialized system prompt configured in `backend/whatsapp_ai_chatbot/settings.py`. The prompt defines the AI's persona as a resort concierge and provides structured instructions for handling booking conversations. See `BOOKING_SYSTEM_README.md` for details on customizing the assistant's behavior.
