@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
@@ -40,6 +41,7 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        <Toaster position="top-right" richColors />
       </AuthProvider>
     </QueryClientProvider>
   );
