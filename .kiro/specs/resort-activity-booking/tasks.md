@@ -460,8 +460,8 @@
     - Support different sizes (small, medium, large)
     - _Requirements: All frontend requirements_
 
-- [ ] 19. Configure environment and deployment
-  - [ ] 19.1 Configure Django settings for booking system
+- [x] 19. Configure environment and deployment
+  - [x] 19.1 Configure Django settings for booking system
     - Add BOOKING_PENDING_TIMEOUT_MINUTES = 30 to settings.py
     - Add BOOKING_CANCELLATION_DEADLINE_HOURS = 24 to settings.py
     - Add BOOKING_WEB_APP_URL setting for notification links
@@ -469,18 +469,18 @@
     - Add frontend URL to CORS_ALLOWED_ORIGINS
     - Add 'booking_system' logger to LOGGING configuration
     - _Requirements: All requirements_
-  - [ ] 19.2 Update .env.example files
+  - [x] 19.2 Update .env.example files
     - Add BOOKING_WEB_APP_URL to backend .env.example
     - Add BOOKING_PENDING_TIMEOUT_MINUTES to backend .env.example
     - Add BOOKING_CANCELLATION_DEADLINE_HOURS to backend .env.example
     - Create frontend/.env.example with VITE_API_URL
     - _Requirements: All requirements_
-  - [ ] 19.3 Update requirements.txt
+  - [x] 19.3 Update requirements.txt
     - Add Pillow for image handling
     - Add django-filter for API filtering
     - Verify all dependencies are listed
     - _Requirements: 1.1_
-  - [ ] 19.4 Create BOOKING_SYSTEM_README.md
+  - [x] 19.4 Create BOOKING_SYSTEM_README.md
     - Document setup instructions for backend and frontend
     - Document all API endpoints with examples
     - Document environment variables
