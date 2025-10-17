@@ -149,9 +149,16 @@ The Resort Activity Booking System enables guests to discover, book, and manage 
    python manage.py createsuperuser
    ```
 
-5. **Seed sample activities** (optional):
+5. **Set up booking system data** (optional but recommended for testing):
    ```bash
+   # Step 1: Create sample activities (watersports, spa, dining, adventure, wellness)
    python manage.py seed_activities
+
+   # Step 2: Generate time slots for the next 60 days (4 slots per day per activity)
+   python manage.py generate_timeslots --days 60 --slots-per-day 4
+
+   # Step 3: Download themed activity images from Pexels (requires PEXELS_API_KEY)
+   python manage.py download_activity_images
    ```
 
 6. **Start Django development server**:
@@ -206,8 +213,15 @@ docker-compose exec web python backend/manage.py migrate
 # Create superuser
 docker-compose exec web python backend/manage.py createsuperuser
 
-# Seed activities
+# Set up booking system data (recommended for testing)
+# Step 1: Seed sample activities
 docker-compose exec web python backend/manage.py seed_activities
+
+# Step 2: Generate time slots for next 60 days
+docker-compose exec web python backend/manage.py generate_timeslots --days 60 --slots-per-day 4
+
+# Step 3: Download activity images (requires PEXELS_API_KEY in .env)
+docker-compose exec web python backend/manage.py download_activity_images
 ```
 
 ---
@@ -234,6 +248,12 @@ Most booking-related endpoints require authentication via session token.
   "phone_number": "+1234567890"
 }
 ```
+
+**Phone Number Format**:
+All phone numbers are automatically normalized to E.164 format (`+[country code][number]`) before processing. The system accepts various input formats:
+- With/without country code: `1234567890` → `+11234567890`
+- With spaces or dashes: `+1 (234) 567-8900` → `+12345678900`
+- WhatsApp prefix: `whatsapp:+1234567890` → `+12345678900`
 
 **Response** (200 OK):
 ```json
@@ -741,6 +761,18 @@ BOOKING_PENDING_TIMEOUT_MINUTES=30
 BOOKING_CANCELLATION_DEADLINE_HOURS=24
 ```
 
+#### Development Shortcuts (Optional)
+```bash
+# Development only: Skip WhatsApp OTP delivery for faster testing
+# When set, this code will be accepted instead of waiting for WhatsApp messages
+# ⚠️ NEVER set this in production - it's a security risk!
+DEV_OTP_CODE=000000
+
+# Optional: API key for downloading themed activity images from Pexels
+# Get a free key at https://www.pexels.com/api/
+PEXELS_API_KEY=your-pexels-api-key-here
+```
+
 #### CORS Configuration (Production)
 ```bash
 # Comma-separated list of allowed origins
@@ -972,6 +1004,53 @@ Bot: "✅ Booking Confirmed!
 
      See you soon! 🌊"
 ```
+
+### Booking Assistant Configuration
+
+The booking system uses a specialized AI system prompt to handle booking-related conversations. The prompt defines the assistant's persona and behavior for the booking workflow.
+
+#### System Prompt Location
+
+The booking assistant system prompt is configured in `backend/whatsapp_ai_chatbot/settings.py` under the `BOOKING_ASSISTANT_SYSTEM_PROMPT` constant.
+
+#### Current Configuration
+
+The assistant is configured as:
+- **Persona**: Friendly and helpful resort concierge
+- **Tone**: Professional yet approachable
+- **Capabilities**:
+  - Activity browsing and recommendations
+  - Multi-turn booking conversations
+  - Time slot availability checks
+  - Booking status inquiries
+  - Cancellation requests
+  - General resort information
+
+#### Customizing the System Prompt
+
+To customize the booking assistant's behavior:
+
+1. Edit `backend/whatsapp_ai_chatbot/settings.py`
+2. Locate the `BOOKING_ASSISTANT_SYSTEM_PROMPT` constant (around line 350-400)
+3. Modify the prompt text to adjust:
+   - Personality and tone
+   - Handling of specific scenarios
+   - Response formatting
+   - Activity recommendation criteria
+   - Special policies or requirements
+
+**Example customizations**:
+- Add resort-specific information (location, amenities, special offers)
+- Include upselling strategies for premium activities
+- Define handling of group bookings or special requests
+- Set policies for weather-related cancellations
+- Add multilingual support instructions
+
+**Note**: After modifying the system prompt, restart the Django server and Celery workers for changes to take effect.
+
+#### Integration with AI Adapter
+
+The booking processor (`backend/chatbot_core/booking_processor.py`) uses the configured system prompt when sending messages to the AI adapter. This ensures consistent, booking-focused responses throughout the conversation.
 
 ### Booking Intent Detection
 

@@ -141,6 +141,7 @@ WhatsApp User → Twilio API → Django Webhook → Celery Task → AI API
 - Axios for HTTP requests
 - Tailwind CSS v4 with Radix UI components
 - shadcn/ui component library
+- Sonner for toast notifications
 
 **Key Components:**
 - `AuthContext.tsx`: Global authentication state (phone number, session token, login/logout)
@@ -486,6 +487,9 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 **Development Shortcuts:**
 - `DEV_OTP_CODE`: Hardcoded OTP for development (e.g., `000000`). When set, this code will be accepted for login instead of requiring WhatsApp OTP delivery. Dramatically speeds up local development workflow. **NEVER set in production**.
 
+**Optional:**
+- `PEXELS_API_KEY`: API key for downloading themed activity images from Pexels. Required for `download_activity_images` management command. Get free key at pexels.com/api.
+
 **AI Provider** (choose one):
 - **OpenRouter**: `OPENROUTER_API_KEY`, `AI_MODEL=openai/gpt-4`
 - **OpenAI**: `OPENAI_API_KEY`, `OPENAI_MODEL=gpt-4`
@@ -544,7 +548,8 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 - **Error handling**: Two-level catch: known errors (user-friendly) vs unexpected (generic message)
 - **Booking workflow**: Two-step process (WhatsApp initiation → Web confirmation) prevents accidental bookings
 - **Authentication**: Passwordless OTP via WhatsApp, session tokens in Redis with TTL
-- **Frontend state**: TanStack Query for server state caching, AuthContext for global auth state
+- **Phone normalization**: All phone numbers automatically normalized to E.164 format (`+[country code][number]`) before storage and processing, ensuring consistency across user identification, bookings, and conversations
+- **Frontend state**: TanStack Query for server state caching, AuthContext for global auth state, Sonner for toast notifications
 
 ## Additional Resources
 

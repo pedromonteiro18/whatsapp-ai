@@ -143,6 +143,16 @@ When a user sends a WhatsApp message, Twilio sends a POST request with the follo
 | `Longitude` | float | Location longitude (if shared) |
 | `ProfileName` | string | Sender's WhatsApp profile name |
 
+**Phone Number Normalization**:
+
+All phone numbers are automatically normalized to E.164 format (`+[country code][number]`) before database storage and processing. The system handles various input formats:
+
+- With/without country code: `1234567890` → `+11234567890`
+- With spaces or dashes: `+1 (234) 567-8900` → `+12345678900`
+- WhatsApp prefix: `whatsapp:+1234567890` → `+12345678900`
+
+This ensures consistency across the application for user identification, booking management, and conversation tracking.
+
 ### Example Webhook Payload
 
 ```http
@@ -454,6 +464,162 @@ Validating configuration...
   - Model: openai/gpt-4
 
 All checks passed!
+```
+
+---
+
+### seed_activities
+
+Create sample resort activities with details for testing the booking system.
+
+**Usage**:
+
+```bash
+python backend/manage.py seed_activities
+```
+
+**Options**:
+
+None. This command creates a predefined set of sample activities.
+
+**Output**:
+
+```
+Creating sample resort activities...
+✓ Created: Tropical Snorkeling Adventure
+✓ Created: Stand-Up Paddleboarding
+✓ Created: Jet Ski Ocean Safari
+✓ Created: Scuba Diving Experience
+✓ Created: Rainforest Zip Line Tour
+✓ Created: Rock Climbing & Rappelling
+✓ Created: ATV Coastal Adventure
+✓ Created: Jungle Trek & Waterfall Swim
+✓ Created: Swedish Massage Therapy
+✓ Created: Hot Stone Therapy
+✓ Created: Couples Spa Package
+✓ Created: Beachside BBQ Experience
+✓ Created: Sunset Dinner Cruise
+✓ Created: Chef's Table Experience
+✓ Created: Sunrise Beach Yoga
+✓ Created: Guided Meditation & Breathwork
+✓ Created: Holistic Wellness Workshop
+
+Successfully created 17 activities!
+```
+
+**What it Creates**:
+
+- Activities across multiple categories (watersports, adventure, spa, dining, wellness)
+- Each activity includes: name, description, category, pricing, duration, and capacity
+- Activities are automatically marked as active
+- Suitable for development and testing purposes
+
+---
+
+### generate_timeslots
+
+Generate available time slots for activities to enable booking functionality.
+
+**Usage**:
+
+```bash
+# Generate slots for next 30 days with 4 slots per day (default)
+python backend/manage.py generate_timeslots
+
+# Generate slots for next 60 days with 6 slots per day
+python backend/manage.py generate_timeslots --days 60 --slots-per-day 6
+```
+
+**Options**:
+
+- `--days N`: Number of days ahead to generate slots for (default: 30)
+- `--slots-per-day N`: Number of time slots to create per day (default: 4)
+
+**Output**:
+
+```
+Generating time slots for 17 activities...
+Processing activity: Tropical Snorkeling Adventure
+  ✓ Generated 120 time slots (30 days × 4 slots/day)
+Processing activity: Stand-Up Paddleboarding
+  ✓ Generated 120 time slots (30 days × 4 slots/day)
+...
+
+====================================
+Successfully generated 2040 time slots!
+- 17 activities
+- 30 days
+- 4 slots per day per activity
+====================================
+```
+
+**Notes**:
+
+- Time slots are evenly distributed throughout business hours (9 AM - 6 PM)
+- Each slot's capacity matches the activity's max_capacity
+- Slots are automatically marked as active
+- Run this command after creating activities with `seed_activities`
+
+---
+
+### download_activity_images
+
+Download high-quality themed images from Pexels for activities.
+
+**Usage**:
+
+```bash
+# Download images for all activities
+python backend/manage.py download_activity_images
+
+# Clear existing images before downloading new ones
+python backend/manage.py download_activity_images --clear
+```
+
+**Options**:
+
+- `--clear`: Remove all existing activity images before downloading new ones
+
+**Requirements**:
+
+- `PEXELS_API_KEY` environment variable must be set
+- Get a free API key at https://www.pexels.com/api/
+
+**Output**:
+
+```
+Processing 17 activities...
+  Downloading image for: Tropical Snorkeling Adventure
+    ✓ Saved image: tropical-snorkeling-adventure.jpg
+  Downloading image for: Stand-Up Paddleboarding
+    ✓ Saved image: stand-up-paddleboarding.jpg
+  Skipping Jet Ski Ocean Safari (already has images)
+...
+
+============================================================
+Downloaded 14/17 images (skipped 3)
+============================================================
+```
+
+**Notes**:
+
+- Each activity is mapped to a specific curated Pexels photo
+- Images are downloaded at 800px width for optimal web display
+- Automatically skips activities that already have images (unless `--clear` is used)
+- Rate limited to 1 request per second to respect Pexels API limits
+- Images are set as primary and assigned order 0
+
+**Example Workflow**:
+
+```bash
+# 1. Create sample activities
+python backend/manage.py seed_activities
+
+# 2. Generate time slots for next 60 days
+python backend/manage.py generate_timeslots --days 60 --slots-per-day 4
+
+# 3. Download activity images (requires PEXELS_API_KEY in .env)
+python backend/manage.py download_activity_images
 ```
 
 ---

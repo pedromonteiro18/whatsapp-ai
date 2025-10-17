@@ -330,6 +330,29 @@ nano .env  # or vim, code, etc.
 
 Fill in all required variables (see Environment Variables section in README.md).
 
+**⚡ Development Shortcuts** (optional but highly recommended):
+
+Add these to your `.env` file to dramatically speed up local development:
+
+```bash
+# Skip WhatsApp OTP delivery during testing (⚡ CRITICAL for fast dev workflow!)
+# Instead of waiting for WhatsApp messages, use this hardcoded OTP
+DEV_OTP_CODE=000000
+
+# Optional: Download themed activity images from Pexels
+# Get a free API key at https://www.pexels.com/api/
+PEXELS_API_KEY=your-pexels-api-key-here
+```
+
+**Why use `DEV_OTP_CODE`?**
+- Bypasses WhatsApp OTP delivery entirely
+- Speeds up authentication testing by 95%
+- No need to wait for Twilio/WhatsApp messages
+- Type `000000` (or your chosen code) instead of checking your phone
+- ⚠️  **NEVER set this in production** - it's a security risk!
+
+**Note**: Phone numbers are automatically normalized to E.164 format (e.g., `+12345678901`). The system handles various input formats (with/without country code, with spaces or dashes) and converts them to the standard format.
+
 ### Step 6: Run Migrations
 
 ```bash
@@ -406,6 +429,36 @@ npm run dev
 
 # Frontend will be available at http://localhost:5173
 ```
+
+### Step 12: Set Up Booking System Data (Optional)
+
+If you want to test the booking system features, populate it with sample data:
+
+```bash
+# In a new terminal, navigate to project root
+cd whatsapp-ai
+
+# Activate virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 1. Create sample resort activities (creates 10+ activities with details)
+python backend/manage.py seed_activities
+
+# 2. Generate time slots for the next 60 days (4 slots per day)
+python backend/manage.py generate_timeslots --days 60 --slots-per-day 4
+
+# 3. Download themed activity images from Pexels (optional, requires API key)
+# Get a free API key at https://www.pexels.com/api/ and add to .env:
+# PEXELS_API_KEY=your-pexels-api-key-here
+python backend/manage.py download_activity_images
+```
+
+**What these commands do:**
+- `seed_activities`: Creates sample activities across categories (watersports, spa, dining, adventure, wellness)
+- `generate_timeslots`: Creates available booking times for each activity
+- `download_activity_images`: Downloads high-quality themed images from Pexels
+
+**Note**: You can skip the images step and upload your own images via Django admin at http://localhost:8000/admin
 
 ---
 
@@ -512,6 +565,28 @@ npm run dev
 
 # Frontend will be available at http://localhost:5173
 ```
+
+### Step 10: Set Up Booking System Data (Optional)
+
+If you want to test the booking system features, populate it with sample data:
+
+```bash
+# Seed sample activities
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py seed_activities
+
+# Generate time slots for the next 60 days
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py generate_timeslots --days 60 --slots-per-day 4
+
+# Download themed activity images from Pexels (requires PEXELS_API_KEY in .env)
+docker-compose -f infrastructure/docker-compose.yml exec web python backend/manage.py download_activity_images
+```
+
+**What these commands do:**
+- `seed_activities`: Creates sample activities across categories (watersports, spa, dining, adventure, wellness)
+- `generate_timeslots`: Creates available booking times for each activity
+- `download_activity_images`: Downloads high-quality themed images from Pexels
+
+**Note**: You can skip the images step and upload your own images via Django admin at http://localhost:8000/admin
 
 ### Docker Management Commands
 

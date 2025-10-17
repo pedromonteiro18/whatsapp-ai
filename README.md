@@ -37,53 +37,94 @@ WhatsApp User → Twilio API → Django Webhook → Celery Task → AI API
 
 ## Project Structure
 
+This is a **monorepo** with clear separation of concerns:
+
 ```
-whatsapp-ai-chatbot/
-├── chatbot_core/              # Core application logic
-│   ├── management/            # Django management commands
-│   ├── migrations/            # Database migrations
-│   ├── config.py              # Configuration management
-│   ├── conversation_manager.py # Conversation state management
-│   ├── message_processor.py  # Message processing logic
-│   ├── error_handler.py       # Error handling utilities
-│   ├── rate_limiter.py        # Rate limiting
-│   ├── sanitizer.py           # Input sanitization
-│   ├── tasks.py               # Celery tasks
-│   └── models.py              # Database models
-├── whatsapp/                  # WhatsApp integration
-│   ├── client.py              # WhatsApp message sending
-│   ├── views.py               # Webhook endpoints
-│   └── utils.py               # Webhook verification
-├── ai_integration/            # AI provider adapters
-│   ├── adapters/              # AI adapter implementations
-│   │   ├── base.py            # Base adapter interface
-│   │   └── openrouter_adapter.py # OpenRouter adapter
-│   └── factory.py             # Adapter factory
-├── booking_system/            # Resort activity booking system
-│   ├── migrations/            # Database migrations
-│   ├── models.py              # Activity, Booking, TimeSlot models
-│   ├── admin.py               # Django admin configuration
-│   ├── services.py            # Business logic layer
-│   ├── serializers.py         # DRF serializers
-│   ├── views.py               # API viewsets
-│   ├── tasks.py               # Celery tasks for bookings
-│   └── urls.py                # URL routing
-├── whatsapp_ai_chatbot/       # Django project settings
-│   ├── settings.py            # Django settings
-│   ├── urls.py                # URL routing
-│   ├── celery.py              # Celery configuration
-│   └── wsgi.py                # WSGI application
-├── .kiro/specs/               # Feature specifications
-│   └── resort-activity-booking/ # Booking system spec
-│       ├── requirements.md    # Feature requirements
-│       ├── design.md          # Architecture & design
-│       └── tasks.md           # Implementation tasks
-├── requirements.txt           # Python dependencies
-├── docker-compose.yml         # Docker services configuration
-├── Dockerfile                 # Application container
-├── docker-entrypoint.sh       # Container startup script
-├── .env.example               # Environment variables template
-└── README.md                  # This file
+whatsapp-ai/
+├── backend/                    # Django backend application
+│   ├── chatbot_core/           # Core chatbot logic
+│   │   ├── management/         # Django management commands
+│   │   ├── migrations/         # Database migrations
+│   │   ├── config.py           # Configuration management
+│   │   ├── conversation_manager.py # Conversation state management
+│   │   ├── message_processor.py # Message processing logic
+│   │   ├── booking_processor.py # Booking intent handling
+│   │   ├── error_handler.py    # Error handling utilities
+│   │   ├── rate_limiter.py     # Rate limiting
+│   │   ├── sanitizer.py        # Input sanitization
+│   │   ├── tasks.py            # Celery tasks
+│   │   └── models.py           # Database models
+│   ├── whatsapp/               # WhatsApp integration
+│   │   ├── client.py           # WhatsApp message sending
+│   │   ├── views.py            # Webhook endpoints
+│   │   └── utils.py            # Webhook verification
+│   ├── ai_integration/         # AI provider adapters
+│   │   ├── adapters/           # AI adapter implementations
+│   │   │   ├── base.py         # Base adapter interface
+│   │   │   └── openrouter_adapter.py # OpenRouter adapter
+│   │   └── factory.py          # Adapter factory
+│   ├── booking_system/         # Resort activity booking system
+│   │   ├── management/         # Management commands
+│   │   │   └── commands/       # Command implementations
+│   │   │       ├── seed_activities.py # Create sample activities
+│   │   │       ├── generate_timeslots.py # Generate time slots
+│   │   │       └── download_activity_images.py # Download themed images
+│   │   ├── migrations/         # Database migrations
+│   │   ├── models.py           # Activity, Booking, TimeSlot models
+│   │   ├── admin.py            # Django admin configuration
+│   │   ├── services.py         # Business logic layer
+│   │   ├── serializers.py      # DRF serializers
+│   │   ├── views.py            # API viewsets
+│   │   ├── auth_views.py       # Authentication endpoints
+│   │   ├── notifications.py    # WhatsApp notification sending
+│   │   ├── tasks.py            # Celery tasks for bookings
+│   │   └── urls.py             # URL routing
+│   ├── whatsapp_ai_chatbot/    # Django project settings
+│   │   ├── settings.py         # Django settings
+│   │   ├── urls.py             # URL routing
+│   │   ├── celery.py           # Celery configuration
+│   │   └── wsgi.py             # WSGI application
+│   ├── manage.py               # Django management script
+│   ├── requirements.txt        # Python dependencies
+│   └── mypy.ini                # Type checking configuration
+├── frontend/                   # React web application
+│   ├── src/                    # React source code
+│   │   ├── api/                # API client and services
+│   │   ├── components/         # React components
+│   │   │   ├── activities/     # Activity-related components
+│   │   │   ├── bookings/       # Booking management components
+│   │   │   ├── auth/           # Authentication components
+│   │   │   ├── layout/         # Layout components
+│   │   │   └── ui/             # shadcn/ui components
+│   │   ├── contexts/           # React contexts
+│   │   │   ├── AuthContext.tsx # Authentication state
+│   │   │   └── NotificationContext.tsx # Toast notifications
+│   │   ├── pages/              # Page components
+│   │   ├── types/              # TypeScript definitions
+│   │   ├── hooks/              # Custom React hooks
+│   │   └── utils/              # Utility functions
+│   ├── package.json            # Node dependencies
+│   ├── vite.config.ts          # Vite configuration
+│   └── tsconfig.json           # TypeScript configuration
+├── infrastructure/             # Infrastructure configuration
+│   ├── docker/                 # Docker files
+│   │   ├── Dockerfile.backend  # Backend container
+│   │   └── docker-entrypoint.sh # Container startup script
+│   └── docker-compose.yml      # Service orchestration
+├── docs/                       # Project documentation
+│   ├── SETUP.md                # Detailed setup guide
+│   ├── API_DOCUMENTATION.md    # API reference
+│   ├── BOOKING_SYSTEM_README.md # Booking system docs
+│   ├── DEV_AUTH.md             # Authentication guide
+│   ├── SERVEO_SETUP.md         # Tunnel setup guide
+│   └── START_BACKEND.md        # Quick start reference
+├── .kiro/specs/                # Feature specifications
+│   ├── whatsapp-ai-chatbot/    # Chatbot feature specs
+│   └── resort-activity-booking/ # Booking system specs
+├── logs/                       # Application logs
+├── .env.example                # Environment variables template
+├── CLAUDE.md                   # AI assistant guide
+└── README.md                   # This file
 ```
 
 ## Prerequisites
@@ -256,6 +297,8 @@ npm run dev
 | `TWILIO_WHATSAPP_NUMBER` | Yes | - | WhatsApp-enabled number (format: `whatsapp:+14155238886`) |
 | `SKIP_WEBHOOK_SIGNATURE_VERIFICATION` | No | `False` | Skip Twilio signature verification (dev only, never in production) |
 
+**Note**: Phone numbers are automatically normalized to E.164 format (e.g., `+12345678901`) before processing.
+
 ### AI Provider Configuration
 
 | Variable | Required | Default | Description |
@@ -285,6 +328,10 @@ npm run dev
 | `BOOKING_WEB_APP_URL` | Yes | - | Public URL of the React frontend for booking confirmations |
 | `BOOKING_PENDING_TIMEOUT_MINUTES` | No | `30` | Time limit for pending booking confirmation |
 | `BOOKING_CANCELLATION_DEADLINE_HOURS` | No | `24` | Hours before activity when cancellation is allowed |
+| `DEV_OTP_CODE` | No | - | **Development only**: Hardcoded OTP for testing (e.g., `000000`). Bypasses WhatsApp delivery. Dramatically speeds up local development. **NEVER set in production**. |
+| `PEXELS_API_KEY` | No | - | API key for downloading themed activity images from Pexels. Required for `download_activity_images` command. Get free key at pexels.com/api |
+
+**Cancellation Policy**: Pending bookings can be cancelled anytime for free (no 24-hour deadline). Only confirmed bookings follow the `BOOKING_CANCELLATION_DEADLINE_HOURS` policy.
 
 ### Example .env File
 
@@ -339,6 +386,12 @@ RATE_LIMIT_WINDOW_SECONDS=60
 BOOKING_WEB_APP_URL=http://localhost:5173
 BOOKING_PENDING_TIMEOUT_MINUTES=30
 BOOKING_CANCELLATION_DEADLINE_HOURS=24
+
+# Development Shortcuts (Optional - Development Only!)
+DEV_OTP_CODE=000000  # Skip WhatsApp OTP delivery for faster testing
+
+# Optional: Pexels API for downloading activity images
+PEXELS_API_KEY=your-pexels-api-key-here
 ```
 
 ## Services Overview
@@ -474,6 +527,33 @@ python backend/manage.py manage_ai_config test
 python backend/manage.py validate_config
 ```
 
+### Booking System Data Management
+
+```bash
+# Seed sample activities (creates example resort activities with details)
+python backend/manage.py seed_activities
+
+# Generate time slots for activities
+# Options: --days N (number of days ahead, default 30)
+#          --slots-per-day N (slots per day, default 4)
+python backend/manage.py generate_timeslots --days 30 --slots-per-day 4
+
+# Download themed activity images from Pexels API
+# Requires PEXELS_API_KEY environment variable
+# Downloads high-quality images based on activity categories
+python backend/manage.py download_activity_images
+
+# Example workflow for setting up a new booking system:
+# 1. Create sample activities
+python backend/manage.py seed_activities
+
+# 2. Generate time slots for next 60 days
+python backend/manage.py generate_timeslots --days 60
+
+# 3. Download activity images (optional, requires Pexels API key)
+python backend/manage.py download_activity_images
+```
+
 ## Development
 
 ### Running Tests
@@ -571,16 +651,16 @@ Before deploying to production:
 
 ```bash
 # Build production image
-docker-compose -f docker-compose.yml build
+docker-compose -f infrastructure/docker-compose.yml build
 
 # Start services in detached mode
 docker-compose -f infrastructure/docker-compose.yml up -d
 
 # Check service status
-docker-compose ps
+docker-compose -f infrastructure/docker-compose.yml ps
 
 # View logs
-docker-compose logs -f web
+docker-compose -f infrastructure/docker-compose.yml logs -f web
 ```
 
 ### Scaling
