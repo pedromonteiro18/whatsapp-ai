@@ -68,9 +68,7 @@ class Command(BaseCommand):
             photo_id = self.ACTIVITY_IMAGE_IDS.get(activity.name)
             if not photo_id:
                 self.stdout.write(
-                    self.style.WARNING(
-                        f"  No image ID defined for: {activity.name}"
-                    )
+                    self.style.WARNING(f"  No image ID defined for: {activity.name}")
                 )
                 continue
 
@@ -89,7 +87,9 @@ class Command(BaseCommand):
                         is_primary=True,
                         order=0,
                     )
-                    activity_image.image.save(filename, ContentFile(image_data), save=True)
+                    activity_image.image.save(
+                        filename, ContentFile(image_data), save=True
+                    )
 
                     self.stdout.write(
                         self.style.SUCCESS(f"    ✓ Saved image: {filename}")
@@ -104,15 +104,12 @@ class Command(BaseCommand):
                     )
 
             except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(f"    ✗ Error: {str(e)}")
-                )
+                self.stdout.write(self.style.ERROR(f"    ✗ Error: {str(e)}"))
 
         self.stdout.write("\n" + "=" * 60)
         self.stdout.write(
             self.style.SUCCESS(
-                f"Downloaded {success_count}/{total} images "
-                f"(skipped {skip_count})"
+                f"Downloaded {success_count}/{total} images " f"(skipped {skip_count})"
             )
         )
 
@@ -139,9 +136,7 @@ class Command(BaseCommand):
             content_type = response.headers.get("content-type", "")
             if "image" not in content_type:
                 self.stdout.write(
-                    self.style.WARNING(
-                        f"    Invalid content type: {content_type}"
-                    )
+                    self.style.WARNING(f"    Invalid content type: {content_type}")
                 )
                 return None
 

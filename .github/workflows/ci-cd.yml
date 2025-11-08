@@ -32,7 +32,7 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run mypy type checking
-        run: mypy backend/ --explicit-package-bases
+        run: mypy backend/ --explicit-package-bases --config-file backend/mypy.ini
 
       - name: Run flake8 linting
         run: flake8 backend/

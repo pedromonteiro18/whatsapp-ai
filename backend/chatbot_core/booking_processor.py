@@ -27,9 +27,7 @@ logger = logging.getLogger(__name__)
 def normalize_phone(user_phone: str) -> str:
     """Remove whatsapp: prefix from phone number if present."""
     return (
-        user_phone.replace("whatsapp:", "")
-        if "whatsapp:" in user_phone
-        else user_phone
+        user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
     )
 
 
@@ -206,7 +204,7 @@ class BookingMessageProcessor:
                 self._clear_conversation_state(user_phone)
                 self.whatsapp_client.send_message(
                     user_phone,
-                    "✅ Booking workflow cancelled. Feel free to start a new booking anytime!"
+                    "✅ Booking workflow cancelled. Feel free to start a new booking anytime!",
                 )
                 return True
 
@@ -236,7 +234,9 @@ class BookingMessageProcessor:
             elif intent == "cancel":
                 return self.handle_cancel_booking(user_phone, message, normalized_phone)
             elif intent == "recommend":
-                return self.handle_recommendations(user_phone, message, normalized_phone)
+                return self.handle_recommendations(
+                    user_phone, message, normalized_phone
+                )
             else:
                 return False
 
@@ -348,7 +348,9 @@ class BookingMessageProcessor:
             )
             return True
 
-    def handle_booking(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
+    def handle_booking(
+        self, user_phone: str, message: str, normalized_phone: str = None
+    ) -> bool:
         """
         Handle booking creation with multi-turn conversation.
 
@@ -748,7 +750,9 @@ class BookingMessageProcessor:
         try:
             booking_num = int(message.strip())
             bookings = state.get("bookings", [])
-            normalized_phone = state.get("normalized_phone", user_phone.replace("whatsapp:", ""))
+            normalized_phone = state.get(
+                "normalized_phone", user_phone.replace("whatsapp:", "")
+            )
 
             if 1 <= booking_num <= len(bookings):
                 booking_id = bookings[booking_num - 1]

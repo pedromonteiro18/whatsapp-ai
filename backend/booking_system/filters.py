@@ -16,16 +16,12 @@ class ActivityFilter(django_filters.FilterSet):
     """
 
     price_min = django_filters.NumberFilter(
-        field_name='price',
-        lookup_expr='gte',
-        label='Minimum Price'
+        field_name="price", lookup_expr="gte", label="Minimum Price"
     )
     price_max = django_filters.NumberFilter(
-        field_name='price',
-        lookup_expr='lte',
-        label='Maximum Price'
+        field_name="price", lookup_expr="lte", label="Maximum Price"
     )
 
     class Meta:
         model = Activity
-        fields = ['category', 'price_min', 'price_max']
+        fields = ["category", "price_min", "price_max"]

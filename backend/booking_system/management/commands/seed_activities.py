@@ -295,7 +295,9 @@ class Command(BaseCommand):
 
                 created_activities.append(activity)
                 self.stdout.write(
-                    self.style.SUCCESS(f"  ✓ Created: {activity.name} ({activity.category})")
+                    self.style.SUCCESS(
+                        f"  ✓ Created: {activity.name} ({activity.category})"
+                    )
                 )
 
         self.stdout.write("")

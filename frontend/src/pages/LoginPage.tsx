@@ -31,14 +31,15 @@ export default function LoginPage() {
       await requestOTP(phone);
       setPhoneNumber(phone);
       setStep('otp');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error requesting OTP:', err);
 
       // Handle different error types
-      if (err.response?.status === 429) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      if (error.response?.status === 429) {
         setError('Too many requests. Please try again in 10 minutes.');
-      } else if (err.response?.data?.error) {
-        setError(err.response.data.error);
+      } else if (error.response?.data?.error) {
+        setError(error.response.data.error);
       } else {
         setError('Failed to send verification code. Please try again.');
       }
@@ -59,13 +60,14 @@ export default function LoginPage() {
 
       // Redirect to bookings page
       navigate('/bookings');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error verifying OTP:', err);
 
-      if (err.response?.status === 401) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      if (error.response?.status === 401) {
         setError('Invalid or expired code. Please try again.');
-      } else if (err.response?.data?.error) {
-        setError(err.response.data.error);
+      } else if (error.response?.data?.error) {
+        setError(error.response.data.error);
       } else {
         setError('Failed to verify code. Please try again.');
       }
@@ -80,10 +82,11 @@ export default function LoginPage() {
 
     try {
       await requestOTP(phoneNumber);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error resending OTP:', err);
 
-      if (err.response?.status === 429) {
+      const error = err as { response?: { status?: number } };
+      if (error.response?.status === 429) {
         setError('Too many requests. Please wait before requesting another code.');
       } else {
         setError('Failed to resend code. Please try again.');

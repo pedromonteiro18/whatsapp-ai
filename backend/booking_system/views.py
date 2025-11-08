@@ -66,9 +66,7 @@ class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
         # Parse dates
         if start_date_str:
             # Parse date string and make timezone-aware
-            naive_date = datetime.fromisoformat(
-                start_date_str.replace("Z", "+00:00")
-            )
+            naive_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
             start_date = (
                 timezone.make_aware(naive_date)
                 if timezone.is_naive(naive_date)
@@ -79,9 +77,7 @@ class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
 
         if end_date_str:
             # Parse date string and make timezone-aware
-            naive_date = datetime.fromisoformat(
-                end_date_str.replace("Z", "+00:00")
-            )
+            naive_date = datetime.fromisoformat(end_date_str.replace("Z", "+00:00"))
             end_date = (
                 timezone.make_aware(naive_date)
                 if timezone.is_naive(naive_date)

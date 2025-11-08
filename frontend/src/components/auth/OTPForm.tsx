@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -23,24 +23,19 @@ export default function OTPForm({
 }: OTPFormProps) {
   const [otp, setOtp] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(expirySeconds);
-  const [canResend, setCanResend] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
+
+  // Derive canResend from timeRemaining to avoid setState in effect
+  const canResend = timeRemaining <= 0;
 
   // Countdown timer
   useEffect(() => {
     if (timeRemaining <= 0) {
-      setCanResend(true);
       return;
     }
 
     const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          setCanResend(true);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeRemaining((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
@@ -48,19 +43,20 @@ export default function OTPForm({
 
   // Auto-submit when OTP is complete
   useEffect(() => {
-    if (otp.length === 6 && !isSubmitting && !isLoading) {
-      setIsSubmitting(true);
+    if (otp.length === 6 && !isSubmittingRef.current && !isLoading) {
+      isSubmittingRef.current = true;
       onVerify(otp);
       // Reset after a delay to allow for new attempts if verification fails
-      setTimeout(() => setIsSubmitting(false), 2000);
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+      }, 2000);
     }
-  }, [otp, onVerify, isSubmitting, isLoading]);
+  }, [otp, onVerify, isLoading]);
 
   const handleResend = () => {
     setOtp('');
     setTimeRemaining(expirySeconds);
-    setCanResend(false);
-    setIsSubmitting(false);
+    isSubmittingRef.current = false;
     onResend();
   };
 

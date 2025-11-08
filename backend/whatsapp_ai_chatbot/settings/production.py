@@ -129,9 +129,9 @@ LOGGING = {
 # CRITICAL: Ensure these development-only features are disabled in production
 # These should never be present in production code
 # (removed via environment configuration or code removal)
-assert not config("DEV_OTP_CODE", default=None), (
-    "DEV_OTP_CODE must not be set in production"
-)
-assert not config("SKIP_WEBHOOK_SIGNATURE_VERIFICATION", default=False, cast=bool), (
-    "SKIP_WEBHOOK_SIGNATURE_VERIFICATION must be False in production"
-)
+assert not config(
+    "DEV_OTP_CODE", default=None
+), "DEV_OTP_CODE must not be set in production"
+assert not config(
+    "SKIP_WEBHOOK_SIGNATURE_VERIFICATION", default=False, cast=bool
+), "SKIP_WEBHOOK_SIGNATURE_VERIFICATION must be False in production"

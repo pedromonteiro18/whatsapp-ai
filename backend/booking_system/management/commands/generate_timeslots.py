@@ -222,9 +222,7 @@ class Command(BaseCommand):
         self.stdout.write("Configuration:")
         self.stdout.write(f"  Activity: {activity.name}")
         self.stdout.write(f"  Date Range: {start_date} to {end_date}")
-        self.stdout.write(
-            f"  Times: {', '.join(t.strftime('%H:%M') for t in times)}"
-        )
+        self.stdout.write(f"  Times: {', '.join(t.strftime('%H:%M') for t in times)}")
 
         if days_filter:
             day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -236,9 +234,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  Capacity per slot: {capacity}")
 
         if options["skip_validation"]:
-            self.stdout.write(
-                self.style.WARNING("  Overlap validation: DISABLED")
-            )
+            self.stdout.write(self.style.WARNING("  Overlap validation: DISABLED"))
 
         if options["dry_run"]:
             self.stdout.write(self.style.WARNING("  Mode: DRY RUN"))

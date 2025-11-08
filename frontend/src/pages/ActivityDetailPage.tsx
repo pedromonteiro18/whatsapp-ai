@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -16,8 +16,8 @@ import type { Activity, TimeSlot } from '@/types/activity';
 import type { BookingCreateRequest } from '@/types/booking';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
-export default function ActivityDetailPage() {
-  const { id } = useParams<{ id: string }>();
+// Inner component that remounts when key changes
+function ActivityDetailContent({ activityId }: { activityId: string }) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -35,10 +35,10 @@ export default function ActivityDetailPage() {
     isLoading,
     error,
   } = useQuery<Activity>({
-    queryKey: ['activity', id],
+    queryKey: ['activity', activityId],
     queryFn: async () => {
       try {
-        return await getActivity(id!);
+        return await getActivity(activityId);
       } catch (error) {
         toast.error('Failed to load activity', {
           description: error instanceof Error ? error.message : 'Please try again later',
@@ -46,7 +46,7 @@ export default function ActivityDetailPage() {
         throw error;
       }
     },
-    enabled: !!id,
+    enabled: !!activityId,
   });
 
   // Create booking mutation
@@ -67,8 +67,9 @@ export default function ActivityDetailPage() {
         navigate('/bookings');
       }, 2000);
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || error.message || 'Failed to create booking';
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } }; message?: string };
+      const message = err.response?.data?.detail || err.message || 'Failed to create booking';
       setBookingError(message);
       setBookingSuccess(false);
 
@@ -85,17 +86,11 @@ export default function ActivityDetailPage() {
     },
   });
 
-  // Reset state when activity changes
-  useEffect(() => {
-    setParticipants(1);
-    setParticipantsInput('1');
-    setSelectedTimeSlot(undefined);
-  }, [id]);
 
   // Handle booking submission
   const handleBookNow = () => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: `/activities/${id}` } });
+      navigate('/login', { state: { from: `/activities/${activityId}` } });
       return;
     }
 
@@ -294,4 +289,16 @@ export default function ActivityDetailPage() {
       </div>
     </div>
   );
+}
+
+// Wrapper component that extracts id and uses it as key
+export default function ActivityDetailPage() {
+  const { id } = useParams<{ id: string }>();
+
+  if (!id) {
+    return <div>Activity not found</div>;
+  }
+
+  // Using key forces component remount when id changes, resetting all state
+  return <ActivityDetailContent key={id} activityId={id} />;
 }

@@ -21,11 +21,11 @@ class ActivityImageSerializer(serializers.ModelSerializer):
         image_name = str(obj.image.name)
 
         # If it's already a full URL (http:// or https://), return as-is
-        if image_name.startswith(('http://', 'https://')):
+        if image_name.startswith(("http://", "https://")):
             return image_name
 
         # Otherwise, build the full URL for uploaded files
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request:
             return request.build_absolute_uri(obj.image.url)
         return obj.image.url
@@ -69,12 +69,12 @@ class ActivitySerializer(serializers.ModelSerializer):
         primary = obj.images.filter(is_primary=True).first()
         if primary:
             serializer = ActivityImageSerializer(primary, context=self.context)
-            return serializer.data.get('image')
+            return serializer.data.get("image")
 
         first_image = obj.images.first()
         if first_image:
             serializer = ActivityImageSerializer(first_image, context=self.context)
-            return serializer.data.get('image')
+            return serializer.data.get("image")
 
         return None
 

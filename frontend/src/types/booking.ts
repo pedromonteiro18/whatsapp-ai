@@ -18,7 +18,7 @@ export interface Booking {
   confirmed_at?: string;
   cancelled_at?: string;
   expires_at?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface BookingCreateRequest {

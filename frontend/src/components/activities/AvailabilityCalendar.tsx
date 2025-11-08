@@ -14,7 +14,7 @@ import { getActivityAvailability } from '@/services/activities';
 
 interface AvailabilityCalendarProps {
   activityId: string;
-  onTimeSlotSelect: (timeSlot: TimeSlot) => void;
+  onTimeSlotSelect: (timeSlot: TimeSlot | undefined) => void;
   selectedTimeSlot?: TimeSlot;
   participants?: number;
 }
@@ -46,7 +46,7 @@ export function AvailabilityCalendar({
       setTimeSlots([]);
       // Clear selected time slot when date/participants change
       if (selectedTimeSlot) {
-        onTimeSlotSelect(undefined as any);
+        onTimeSlotSelect(undefined);
       }
 
       // Minimum loading time for smooth UX (prevents jarring flicker on fast responses)
@@ -76,7 +76,7 @@ export function AvailabilityCalendar({
     };
 
     fetchTimeSlots();
-  }, [activityId, selectedDate, participants]);
+  }, [activityId, selectedDate, participants, onTimeSlotSelect, selectedTimeSlot]);
 
   return (
     <Card className="p-3">
