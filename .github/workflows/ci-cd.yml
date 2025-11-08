@@ -9,6 +9,8 @@ on:
 env:
   PYTHON_VERSION: '3.12'
   NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test-backend:
@@ -70,10 +72,68 @@ jobs:
           cd frontend
           npm run lint
 
+  build-images:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./infrastructure/docker/Dockerfile.backend
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      - name: Extract metadata for frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./infrastructure/docker/Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+
   deploy-beta:
     name: Deploy to Beta
     runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
+    needs: [build-images]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: beta
@@ -92,19 +152,29 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.BETA_HOST }} >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config << 'SSHEOF'
+          Host beta
+            HostName ${{ secrets.BETA_HOST }}
+            User ${{ secrets.BETA_SSH_USER }}
+            ServerAliveInterval 60
+            ServerAliveCountMax 10
+            TCPKeepAlive yes
+          SSHEOF
 
       - name: Deploy to beta
         run: |
-          ssh ${{ secrets.BETA_SSH_USER }}@${{ secrets.BETA_HOST }} << 'EOF'
+          ssh beta << 'EOF'
             set -e
             cd /app/whatsapp-ai
 
-            echo "Pulling latest code..."
+            echo "Pulling latest code (for docker-compose files)..."
             git pull origin main
 
-            echo "Building and deploying with Docker Compose..."
+            echo "Pulling pre-built images..."
             docker-compose -f infrastructure/docker-compose.beta.yml pull
-            docker-compose -f infrastructure/docker-compose.beta.yml up -d --build
+
+            echo "Restarting services..."
+            docker-compose -f infrastructure/docker-compose.beta.yml up -d
 
             echo "Running database migrations..."
             docker-compose -f infrastructure/docker-compose.beta.yml exec -T web python backend/manage.py migrate --noinput
@@ -112,7 +182,7 @@ jobs:
             echo "Collecting static files..."
             docker-compose -f infrastructure/docker-compose.beta.yml exec -T web python backend/manage.py collectstatic --noinput
 
-            echo "Checking deployment health..."
+            echo "Deployment complete!"
             docker-compose -f infrastructure/docker-compose.beta.yml ps
           EOF
 
@@ -148,19 +218,29 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config << 'SSHEOF'
+          Host prod
+            HostName ${{ secrets.PROD_HOST }}
+            User ${{ secrets.PROD_SSH_USER }}
+            ServerAliveInterval 60
+            ServerAliveCountMax 10
+            TCPKeepAlive yes
+          SSHEOF
 
       - name: Deploy to production
         run: |
-          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
+          ssh prod << 'EOF'
             set -e
             cd /app/whatsapp-ai
 
-            echo "Pulling latest code..."
+            echo "Pulling latest code (for docker-compose files)..."
             git pull origin main
 
-            echo "Building and deploying with Docker Compose..."
+            echo "Pulling pre-built images..."
             docker-compose -f infrastructure/docker-compose.prod.yml pull
-            docker-compose -f infrastructure/docker-compose.prod.yml up -d --build
+
+            echo "Restarting services..."
+            docker-compose -f infrastructure/docker-compose.prod.yml up -d
 
             echo "Running database migrations..."
             docker-compose -f infrastructure/docker-compose.prod.yml exec -T web python backend/manage.py migrate --noinput
@@ -168,7 +248,7 @@ jobs:
             echo "Collecting static files..."
             docker-compose -f infrastructure/docker-compose.prod.yml exec -T web python backend/manage.py collectstatic --noinput
 
-            echo "Checking deployment health..."
+            echo "Deployment complete!"
             docker-compose -f infrastructure/docker-compose.prod.yml ps
           EOF
 
