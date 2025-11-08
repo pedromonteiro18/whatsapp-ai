@@ -32,19 +32,13 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run mypy type checking
-        run: |
-          cd backend
-          mypy .
+        run: mypy backend/ --explicit-package-bases
 
       - name: Run flake8 linting
-        run: |
-          cd backend
-          flake8 .
+        run: flake8 backend/
 
       - name: Run black format check
-        run: |
-          cd backend
-          black --check .
+        run: black --check backend/
 
   test-frontend:
     name: Test Frontend
