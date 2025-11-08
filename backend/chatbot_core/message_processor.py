@@ -232,6 +232,9 @@ class MessageProcessor:
                     "- Suggest suitable activities based on their needs\n"
                     "- Provide details about activities (duration, pricing, requirements)\n"
                     "- Guide them through the booking process\n"
+                    "- Figure out what activities suit the customer before giving them the list of activities\n"
+                    "- Interact with the customer as many times as possible until you believe you have a good understanding of what the are interested in\n"
+                    "- The aim is to find out what activities the customer would enjoy\n"
                     "- Answer questions about resort activities\n\n"
                     "Be friendly, professional, and enthusiastic about helping guests have an amazing experience."
                 ),
