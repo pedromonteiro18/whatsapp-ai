@@ -123,7 +123,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: beta
-      url: https://beta.yourdomain.com
+      url: https://resort-booking-beta.duckdns.org
 
     steps:
       - name: Checkout code
@@ -165,7 +165,7 @@ jobs:
       - name: Health check
         run: |
           sleep 10
-          curl --fail https://beta.yourdomain.com/health/ || exit 1
+          curl --fail https://resort-booking-beta.duckdns.org/health/ || exit 1
 
       - name: Notify deployment
         if: always()
@@ -179,7 +179,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: production
-      url: https://yourdomain.com
+      url: https://resort-booking.duckdns.org
 
     steps:
       - name: Checkout code
@@ -221,7 +221,7 @@ jobs:
       - name: Health check
         run: |
           sleep 10
-          curl --fail https://yourdomain.com/health/ || exit 1
+          curl --fail https://resort-booking.duckdns.org/health/ || exit 1
 
       - name: Notify deployment
         if: always()
