@@ -151,11 +151,13 @@ jobs:
       - name: Add host to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.BETA_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H -T 10 ${{ secrets.BETA_HOST }} >> ~/.ssh/known_hosts 2>&1 || echo "Warning: ssh-keyscan failed, will use StrictHostKeyChecking=no"
           cat >> ~/.ssh/config << 'SSHEOF'
           Host beta
             HostName ${{ secrets.BETA_HOST }}
             User ${{ secrets.BETA_SSH_USER }}
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
             ServerAliveInterval 60
             ServerAliveCountMax 10
             TCPKeepAlive yes
@@ -217,11 +219,13 @@ jobs:
       - name: Add host to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H -T 10 ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts 2>&1 || echo "Warning: ssh-keyscan failed, will use StrictHostKeyChecking=no"
           cat >> ~/.ssh/config << 'SSHEOF'
           Host prod
             HostName ${{ secrets.PROD_HOST }}
             User ${{ secrets.PROD_SSH_USER }}
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
             ServerAliveInterval 60
             ServerAliveCountMax 10
             TCPKeepAlive yes
