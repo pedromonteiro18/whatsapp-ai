@@ -173,19 +173,19 @@ jobs:
             git pull origin main
 
             echo "Pulling pre-built images..."
-            docker-compose -f infrastructure/docker-compose.beta.yml pull
+            docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml pull
 
             echo "Restarting services..."
-            docker-compose -f infrastructure/docker-compose.beta.yml up -d
+            docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml up -d
 
             echo "Running database migrations..."
-            docker-compose -f infrastructure/docker-compose.beta.yml exec -T web python backend/manage.py migrate --noinput
+            docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml exec -T web python backend/manage.py migrate --noinput
 
             echo "Collecting static files..."
-            docker-compose -f infrastructure/docker-compose.beta.yml exec -T web python backend/manage.py collectstatic --noinput
+            docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml exec -T web python backend/manage.py collectstatic --noinput
 
             echo "Deployment complete!"
-            docker-compose -f infrastructure/docker-compose.beta.yml ps
+            docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml ps
           EOF
 
       - name: Health check
@@ -241,19 +241,19 @@ jobs:
             git pull origin main
 
             echo "Pulling pre-built images..."
-            docker-compose -f infrastructure/docker-compose.prod.yml pull
+            docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml pull
 
             echo "Restarting services..."
-            docker-compose -f infrastructure/docker-compose.prod.yml up -d
+            docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml up -d
 
             echo "Running database migrations..."
-            docker-compose -f infrastructure/docker-compose.prod.yml exec -T web python backend/manage.py migrate --noinput
+            docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml exec -T web python backend/manage.py migrate --noinput
 
             echo "Collecting static files..."
-            docker-compose -f infrastructure/docker-compose.prod.yml exec -T web python backend/manage.py collectstatic --noinput
+            docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml exec -T web python backend/manage.py collectstatic --noinput
 
             echo "Deployment complete!"
-            docker-compose -f infrastructure/docker-compose.prod.yml ps
+            docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml ps
           EOF
 
       - name: Health check
