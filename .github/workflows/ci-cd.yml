@@ -165,12 +165,17 @@ jobs:
 
       - name: Deploy to beta
         run: |
-          ssh beta << 'EOF'
+          ssh beta "bash -s" << EOF
             set -e
             cd /app/whatsapp-ai
 
             echo "Pulling latest code (for docker-compose files)..."
             git pull origin main
+
+            echo "Updating Twilio configuration in .env..."
+            sed -i 's/^TWILIO_ACCOUNT_SID=.*/TWILIO_ACCOUNT_SID=${{ secrets.BETA_TWILIO_ACCOUNT_SID }}/' .env
+            sed -i 's/^TWILIO_AUTH_TOKEN=.*/TWILIO_AUTH_TOKEN=${{ secrets.BETA_TWILIO_AUTH_TOKEN }}/' .env
+            sed -i 's|^TWILIO_WHATSAPP_NUMBER=.*|TWILIO_WHATSAPP_NUMBER=${{ secrets.BETA_TWILIO_WHATSAPP_NUMBER }}|' .env
 
             echo "Pulling pre-built images..."
             docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml pull
@@ -233,12 +238,17 @@ jobs:
 
       - name: Deploy to production
         run: |
-          ssh prod << 'EOF'
+          ssh prod "bash -s" << EOF
             set -e
             cd /app/whatsapp-ai
 
             echo "Pulling latest code (for docker-compose files)..."
             git pull origin main
+
+            echo "Updating Twilio configuration in .env..."
+            sed -i 's/^TWILIO_ACCOUNT_SID=.*/TWILIO_ACCOUNT_SID=${{ secrets.PROD_TWILIO_ACCOUNT_SID }}/' .env
+            sed -i 's/^TWILIO_AUTH_TOKEN=.*/TWILIO_AUTH_TOKEN=${{ secrets.PROD_TWILIO_AUTH_TOKEN }}/' .env
+            sed -i 's|^TWILIO_WHATSAPP_NUMBER=.*|TWILIO_WHATSAPP_NUMBER=${{ secrets.PROD_TWILIO_WHATSAPP_NUMBER }}|' .env
 
             echo "Pulling pre-built images..."
             docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml pull
