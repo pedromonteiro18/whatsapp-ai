@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-whatsapp_chatbot_beta}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data_beta:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_beta:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app_network
+
+  web:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.backend.prod
+    restart: unless-stopped
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.whatsapp_ai_chatbot.settings.beta
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-whatsapp_chatbot_beta}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - BOOKING_WEB_APP_URL=${BOOKING_WEB_APP_URL}
+    volumes:
+      - ../backend:/app/backend
+      - static_volume_beta:/app/staticfiles
+      - media_volume_beta:/app/media
+      - logs_volume_beta:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python backend/manage.py check --deploy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app_network
+
+  celery_worker:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.backend.prod
+    restart: unless-stopped
+    command: celery -A backend.whatsapp_ai_chatbot worker --loglevel=info --concurrency=2
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.whatsapp_ai_chatbot.settings.beta
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-whatsapp_chatbot_beta}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - BOOKING_WEB_APP_URL=${BOOKING_WEB_APP_URL}
+    volumes:
+      - ../backend:/app/backend
+      - logs_volume_beta:/app/logs
+    depends_on:
+      - web
+      - redis
+      - db
+    networks:
+      - app_network
+
+  celery_beat:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.backend.prod
+    restart: unless-stopped
+    command: celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.whatsapp_ai_chatbot.settings.beta
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-whatsapp_chatbot_beta}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ../backend:/app/backend
+      - logs_volume_beta:/app/logs
+    depends_on:
+      - web
+      - redis
+      - db
+    networks:
+      - app_network
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - app_network
+
+volumes:
+  postgres_data_beta:
+  redis_data_beta:
+  static_volume_beta:
+  media_volume_beta:
+  logs_volume_beta:
+
+networks:
+  app_network:
+    driver: bridge
