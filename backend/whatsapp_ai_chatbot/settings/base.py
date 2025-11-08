@@ -4,7 +4,6 @@ These settings are common across all environments.
 """
 
 from pathlib import Path
-from typing import cast
 
 from decouple import config
 

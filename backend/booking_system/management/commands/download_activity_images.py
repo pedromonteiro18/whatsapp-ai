@@ -100,7 +100,7 @@ class Command(BaseCommand):
                     time.sleep(1)
                 else:
                     self.stdout.write(
-                        self.style.ERROR(f"    ✗ Failed to download image")
+                        self.style.ERROR("    ✗ Failed to download image")
                     )
 
             except Exception as e:

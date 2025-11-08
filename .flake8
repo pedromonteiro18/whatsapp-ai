@@ -1,0 +1,10 @@
+[flake8]
+max-line-length = 100
+exclude =
+    migrations,
+    __pycache__,
+    venv,
+    .git
+# Ignore line length in management commands (they contain seed data with long descriptions)
+per-file-ignores =
+    */management/commands/*.py:E501

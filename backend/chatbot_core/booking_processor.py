@@ -24,6 +24,15 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 
+def normalize_phone(user_phone: str) -> str:
+    """Remove whatsapp: prefix from phone number if present."""
+    return (
+        user_phone.replace("whatsapp:", "")
+        if "whatsapp:" in user_phone
+        else user_phone
+    )
+
+
 class BookingMessageProcessor:
     """
     Processes WhatsApp messages with booking intents.
@@ -187,7 +196,7 @@ class BookingMessageProcessor:
             True if message was handled, False if not a booking intent
         """
         # Normalize phone number by removing whatsapp: prefix for database consistency
-        normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+        normalized_phone = normalize_phone(user_phone)
 
         # Check if there's an ongoing conversation state
         state = self._get_conversation_state(user_phone)
@@ -356,7 +365,7 @@ class BookingMessageProcessor:
         """
         # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
         if normalized_phone is None:
-            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+            normalized_phone = normalize_phone(user_phone)
 
         # Import here to avoid circular imports
         from backend.booking_system.models import Activity
@@ -523,8 +532,10 @@ class BookingMessageProcessor:
                         return True
 
                     # Create the booking with normalized phone
-                    normalized_phone = state.get("normalized_phone", user_phone.replace("whatsapp:", ""))
-                    booking = BookingService.create_booking(
+                    normalized_phone = state.get(
+                        "normalized_phone", normalize_phone(user_phone)
+                    )
+                    BookingService.create_booking(
                         user_phone=normalized_phone,
                         activity_id=state["activity_id"],
                         time_slot_id=state["time_slot_id"],
@@ -558,7 +569,9 @@ class BookingMessageProcessor:
 
         return True
 
-    def handle_check_booking(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
+    def handle_check_booking(
+        self, user_phone: str, message: str, normalized_phone: str = None
+    ) -> bool:
         """
         Handle checking user's bookings.
 
@@ -574,7 +587,7 @@ class BookingMessageProcessor:
         """
         # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
         if normalized_phone is None:
-            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+            normalized_phone = normalize_phone(user_phone)
 
         from backend.booking_system.services import BookingService
 
@@ -649,7 +662,9 @@ class BookingMessageProcessor:
             )
             return True
 
-    def handle_cancel_booking(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
+    def handle_cancel_booking(
+        self, user_phone: str, message: str, normalized_phone: str = None
+    ) -> bool:
         """
         Handle booking cancellation requests.
 
@@ -665,7 +680,7 @@ class BookingMessageProcessor:
         """
         # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
         if normalized_phone is None:
-            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+            normalized_phone = normalize_phone(user_phone)
 
         from backend.booking_system.services import BookingService
 
@@ -785,7 +800,9 @@ class BookingMessageProcessor:
             )
             return True
 
-    def handle_recommendations(self, user_phone: str, message: str, normalized_phone: str = None) -> bool:
+    def handle_recommendations(
+        self, user_phone: str, message: str, normalized_phone: str = None
+    ) -> bool:
         """
         Handle AI-powered recommendation requests.
 
@@ -801,7 +818,7 @@ class BookingMessageProcessor:
         """
         # Use normalized phone if provided, otherwise use user_phone (backward compatibility)
         if normalized_phone is None:
-            normalized_phone = user_phone.replace("whatsapp:", "") if "whatsapp:" in user_phone else user_phone
+            normalized_phone = normalize_phone(user_phone)
 
         from backend.booking_system.services import RecommendationService
 
