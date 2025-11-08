@@ -70,3 +70,7 @@ celerybeat.pid
 
 # Docker
 *.pid
+
+# Deployment setup files (contain sensitive keys)
+GITHUB_SECRETS_SETUP.md
+DNS_AND_SSL_SETUP.md
