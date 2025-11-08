@@ -1,59 +1,18 @@
 services:
-  db:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app_network
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data_prod:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - app_network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-
   web:
     image: ghcr.io/pedromonteiro18/whatsapp-ai-backend:latest
     restart: unless-stopped
     environment:
       - DJANGO_SETTINGS_MODULE=backend.whatsapp_ai_chatbot.settings.production
-      - DB_HOST=db
+      - DB_HOST=${DB_HOST}
       - DB_PORT=5432
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - SECRET_KEY=${SECRET_KEY}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
@@ -68,11 +27,6 @@ services:
       - static_volume_prod:/app/staticfiles
       - media_volume_prod:/app/media
       - logs_volume_prod:/app/logs
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python backend/manage.py check --deploy || exit 1"]
       interval: 30s
@@ -93,15 +47,15 @@ services:
     command: celery -A backend.whatsapp_ai_chatbot worker --loglevel=info --concurrency=2 --max-tasks-per-child=1000
     environment:
       - DJANGO_SETTINGS_MODULE=backend.whatsapp_ai_chatbot.settings.production
-      - DB_HOST=db
+      - DB_HOST=${DB_HOST}
       - DB_PORT=5432
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - SECRET_KEY=${SECRET_KEY}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
@@ -115,8 +69,6 @@ services:
       - logs_volume_prod:/app/logs
     depends_on:
       - web
-      - redis
-      - db
     networks:
       - app_network
     deploy:
@@ -131,15 +83,15 @@ services:
     command: celery -A backend.whatsapp_ai_chatbot beat --loglevel=info
     environment:
       - DJANGO_SETTINGS_MODULE=backend.whatsapp_ai_chatbot.settings.production
-      - DB_HOST=db
+      - DB_HOST=${DB_HOST}
       - DB_PORT=5432
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - SECRET_KEY=${SECRET_KEY}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
@@ -153,8 +105,6 @@ services:
       - logs_volume_prod:/app/logs
     depends_on:
       - web
-      - redis
-      - db
     networks:
       - app_network
     deploy:
@@ -188,8 +138,6 @@ services:
           memory: 128M
 
 volumes:
-  postgres_data_prod:
-  redis_data_prod:
   static_volume_prod:
   media_volume_prod:
   logs_volume_prod:
