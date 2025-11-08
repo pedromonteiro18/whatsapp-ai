@@ -30,7 +30,16 @@ export function useBookings() {
   // Query for fetching bookings
   const bookingsQuery = useQuery<Booking[], Error>({
     queryKey,
-    queryFn: getBookings,
+    queryFn: async () => {
+      try {
+        return await getBookings();
+      } catch (error) {
+        toast.error('Failed to load bookings', {
+          description: error instanceof Error ? error.message : 'Please try again later',
+        });
+        throw error;
+      }
+    },
     // Cache for 2 minutes (bookings change more frequently than activities)
     staleTime: 2 * 60 * 1000,
     // Keep unused data in cache for 5 minutes
@@ -39,12 +48,6 @@ export function useBookings() {
     refetchOnWindowFocus: true,
     // Retry failed requests 2 times
     retry: 2,
-    // Show toast notification on error
-    onError: (error: Error) => {
-      toast.error('Failed to load bookings', {
-        description: error.message || 'Please try again later',
-      });
-    },
   });
 
   // Mutation for confirming a booking

@@ -23,9 +23,18 @@ export function useActivities(
   // This ensures cache is invalidated when filters change
   const queryKey = ['activities', filters];
 
-  return useQuery<Activity[], Error>({
+  const query = useQuery<Activity[], Error>({
     queryKey,
-    queryFn: () => getActivities(filters),
+    queryFn: async () => {
+      try {
+        return await getActivities(filters);
+      } catch (error) {
+        toast.error('Failed to load activities', {
+          description: error instanceof Error ? error.message : 'Please try again later',
+        });
+        throw error;
+      }
+    },
     // Cache for 5 minutes
     staleTime: 5 * 60 * 1000,
     // Keep unused data in cache for 10 minutes
@@ -36,11 +45,7 @@ export function useActivities(
     retry: 2,
     // Keep previous data while fetching to prevent flicker
     placeholderData: (previousData) => previousData,
-    // Show toast notification on error
-    onError: (error: Error) => {
-      toast.error('Failed to load activities', {
-        description: error.message || 'Please try again later',
-      });
-    },
   });
+
+  return query;
 }

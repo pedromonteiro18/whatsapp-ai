@@ -49,7 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Verify token with backend
       try {
-        const response = await getCurrentUser(token);
+        const response = await getCurrentUser();
 
         // Token is valid
         setAuthState({
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Call logout API if we have a token
       if (authState.token) {
         try {
-          await logoutAPI(authState.token);
+          await logoutAPI();
         } catch (error) {
           // Log error but continue with logout
           console.error('Error calling logout API:', error);

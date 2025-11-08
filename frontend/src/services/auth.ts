@@ -38,7 +38,7 @@ export async function verifyOTP(
  * POST /api/v1/auth/logout/
  * Note: Authorization header is automatically added by the API client interceptor
  */
-export async function logout(token: string): Promise<void> {
+export async function logout(): Promise<void> {
   await apiClient.post('/auth/logout/', {});
 }
 
@@ -47,7 +47,7 @@ export async function logout(token: string): Promise<void> {
  * GET /api/v1/auth/me/
  * Note: Authorization header is automatically added by the API client interceptor
  */
-export async function getCurrentUser(token: string): Promise<{ phone_number: string; authenticated: boolean }> {
+export async function getCurrentUser(): Promise<{ phone_number: string; authenticated: boolean }> {
   const response = await apiClient.get('/auth/me/');
   return response.data;
 }

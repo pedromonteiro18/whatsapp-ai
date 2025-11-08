@@ -1,10 +1,5 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { toast } from 'sonner';
-
-/**
- * Notification types
- */
-type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
 /**
  * Options for notification methods

@@ -12,7 +12,7 @@ import { Loading } from '@/components/Loading';
 import { getActivity } from '@/services/activities';
 import { createBooking } from '@/services/bookings';
 import { useAuth } from '@/contexts/AuthContext';
-import type { TimeSlot } from '@/types/activity';
+import type { Activity, TimeSlot } from '@/types/activity';
 import type { BookingCreateRequest } from '@/types/booking';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
@@ -34,16 +34,19 @@ export default function ActivityDetailPage() {
     data: activity,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<Activity>({
     queryKey: ['activity', id],
-    queryFn: () => getActivity(id!),
-    enabled: !!id,
-    // Show toast notification on error
-    onError: (error: Error) => {
-      toast.error('Failed to load activity', {
-        description: error.message || 'Please try again later',
-      });
+    queryFn: async () => {
+      try {
+        return await getActivity(id!);
+      } catch (error) {
+        toast.error('Failed to load activity', {
+          description: error instanceof Error ? error.message : 'Please try again later',
+        });
+        throw error;
+      }
     },
+    enabled: !!id,
   });
 
   // Create booking mutation

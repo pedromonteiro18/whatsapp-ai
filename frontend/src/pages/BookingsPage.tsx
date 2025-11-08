@@ -71,7 +71,7 @@ export default function BookingsPage() {
   }
 
   // Count pending bookings for header
-  const pendingCount = bookings?.filter((b: any) => b.status === 'pending').length || 0;
+  const pendingCount = bookings?.filter((b) => b.status === 'pending').length || 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -104,7 +104,7 @@ export default function BookingsPage() {
 
       {/* Bookings List */}
       <BookingList
-        bookings={bookings}
+        bookings={bookings || []}
         isLoading={isLoading}
         onConfirm={confirmBooking}
         onCancel={cancelBooking}
