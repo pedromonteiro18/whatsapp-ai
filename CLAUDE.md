@@ -567,4 +567,4 @@ docker-compose -f infrastructure/docker-compose.yml exec db psql -U postgres -d 
 
 **System Prompt Configuration:**
 The booking assistant uses a specialized system prompt configured in `backend/whatsapp_ai_chatbot/settings.py`. The prompt defines the AI's persona as a resort concierge and provides structured instructions for handling booking conversations. See `BOOKING_SYSTEM_README.md` for details on customizing the assistant's behavior.
-- use pedro-personal aws profile
+- use pedro-personal aws profile when accessing aws resources
