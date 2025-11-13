@@ -37,6 +37,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
+# Proxy configuration - trust nginx reverse proxy headers
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
 # HTTP Strict Transport Security (HSTS) - moderate settings for beta
 SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=3600, cast=int)  # 1 hour
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # Don't include subdomains in beta
