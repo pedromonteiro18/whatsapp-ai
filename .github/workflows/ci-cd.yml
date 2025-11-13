@@ -196,7 +196,7 @@ jobs:
       - name: Health check
         run: |
           sleep 10
-          curl --fail https://resort-booking-beta.duckdns.org/health/ || exit 1
+          curl --fail --location https://resort-booking-beta.duckdns.org/health/ || exit 1
 
       - name: Notify deployment
         if: always()
@@ -269,7 +269,7 @@ jobs:
       - name: Health check
         run: |
           sleep 10
-          curl --fail https://resort-booking.duckdns.org/health/ || exit 1
+          curl --fail --location https://resort-booking.duckdns.org/health/ || exit 1
 
       - name: Notify deployment
         if: always()
