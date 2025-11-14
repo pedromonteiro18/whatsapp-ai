@@ -180,7 +180,8 @@ jobs:
             echo "Pulling pre-built images..."
             docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml pull
 
-            echo "Restarting services..."
+            echo "Recreating services to reload environment variables..."
+            docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml down
             docker-compose --env-file .env -f infrastructure/docker-compose.beta.yml up -d
 
             echo "Running database migrations..."
@@ -253,7 +254,8 @@ jobs:
             echo "Pulling pre-built images..."
             docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml pull
 
-            echo "Restarting services..."
+            echo "Recreating services to reload environment variables..."
+            docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml down
             docker-compose --env-file .env -f infrastructure/docker-compose.prod.yml up -d
 
             echo "Running database migrations..."
